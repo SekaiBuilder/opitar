@@ -17,3 +17,4 @@
 |---|---|---|
 | DEC-101 | ¿Empaquetar como app de escritorio (Tauri) además del binario? | Si el navegador molesta en el uso diario |
 | DEC-102 | ¿Miniaturas generadas en disco para carpetas de decenas de miles de imágenes? | Medir rendimiento con un proyecto grande real |
+| DEC-103 | ¿Mostrar las capas de un mismo elemento (cerrada/fondo/frente) en una sola fila de Comparar? | Uso real con las cajas |

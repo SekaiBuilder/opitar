@@ -19,7 +19,7 @@ código abierto). Norma común: `../METODOLOGIA-SDD.md` de `activos/`.
 - Specs de área: [IDX-01 — Índice de archivos](IDX-01-indice.md), [SEL-01 — Selección y guardado](SEL-01-seleccion.md), [UI-01 — Interfaz y visor](UI-01-interfaz.md)
 - [Trazabilidad y evidencia](trazabilidad.md)
 
-Cambio activo: [CAM-001 — Primera versión de Opitar](cambios/CAM-001/spec.md).
+Cambios: [CAM-001 — Primera versión de Opitar](cambios/CAM-001/spec.md) (implementado) · [CAM-002 — Grupos que entienden carpetas y prefijos](cambios/CAM-002/spec.md) (implementado).
 
 ## Cómo leer los requisitos
 

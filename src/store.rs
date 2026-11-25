@@ -245,6 +245,8 @@ mod tests {
             alto: None,
             grupo: "imagen:logo".into(),
             copias: 1,
+            base: String::new(),
+            folder: String::new(),
         }
     }
 

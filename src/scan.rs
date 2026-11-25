@@ -62,6 +62,11 @@ pub struct Entry {
     pub grupo: String,
     /// How many indexed files share this content (1 = unique).
     pub copias: usize,
+    /// Normalised file name and parent-folder name, inputs to `assign_groups` (CAM-002).
+    #[serde(skip)]
+    pub(crate) base: String,
+    #[serde(skip)]
+    pub(crate) folder: String,
 }
 
 fn path_str<S: serde::Serializer>(p: &Path, s: S) -> Result<S::Ok, S::Error> {
@@ -142,6 +147,7 @@ pub fn scan(sources: &[Source], opts: &ScanOptions) -> Vec<Entry> {
         .collect();
 
     assign_ids(&mut entries);
+    assign_groups(&mut entries);
     entries.sort_by(|a, b| {
         a.fuente.cmp(&b.fuente).then_with(|| natural_cmp(&a.carpeta, &b.carpeta)).then_with(|| natural_cmp(&a.nombre, &b.nombre))
     });
@@ -217,8 +223,10 @@ fn describe(fuente: usize, path: &Path, rel: &str, cache: &Cache) -> std::io::Re
         modificado,
         ancho,
         alto,
-        grupo: format!("{}:{}", k.as_str(), variant_key(&stem)),
+        grupo: String::new(),
         copias: 1,
+        base: variant_key(&stem),
+        folder: rel.rsplit('/').nth(1).map(variant_key).unwrap_or_default(),
     })
 }
 
@@ -255,6 +263,55 @@ pub fn assign_ids(entries: &mut [Entry]) {
         let collides = by_short.get(&short).map(|s| s.len() > 1).unwrap_or(false);
         e.id = if collides { ids::format_id(&e.digest, true) } else { short };
         e.copias = copies[&e.digest];
+    }
+}
+
+/// IDX-01-R05 (CAM-002): a name used in several folders of a source takes its folder
+/// ("12-oro/cerrada" → "oro-cerrada"); a first word shared by most of a source ("caja-…") is dropped.
+pub fn assign_groups(entries: &mut [Entry]) {
+    let mut folders: HashMap<(usize, &'static str, String), HashSet<String>> = HashMap::new();
+    for e in entries.iter() {
+        folders.entry((e.fuente, e.tipo, e.base.clone())).or_default().insert(e.folder.clone());
+    }
+    let keys: Vec<String> = entries
+        .iter()
+        .map(|e| {
+            let shared = folders[&(e.fuente, e.tipo, e.base.clone())].len() > 1;
+            if shared && !e.folder.is_empty() {
+                format!("{}-{}", e.folder, e.base)
+            } else {
+                e.base.clone()
+            }
+        })
+        .collect();
+    let mut by_source: HashMap<usize, Vec<usize>> = HashMap::new();
+    for (i, e) in entries.iter().enumerate() {
+        by_source.entry(e.fuente).or_default().push(i);
+    }
+    let mut final_keys = keys.clone();
+    for idx in by_source.values() {
+        if idx.len() < 3 {
+            continue;
+        }
+        let mut firsts: HashMap<&str, usize> = HashMap::new();
+        for &i in idx {
+            if let Some((first, _)) = keys[i].split_once('-') {
+                *firsts.entry(first).or_default() += 1;
+            }
+        }
+        if let Some((word, n)) = firsts.into_iter().max_by_key(|(_, n)| *n) {
+            if n * 10 >= idx.len() * 6 {
+                let prefix = format!("{}-", word);
+                for &i in idx {
+                    if let Some(rest) = keys[i].strip_prefix(&prefix) {
+                        final_keys[i] = rest.to_string();
+                    }
+                }
+            }
+        }
+    }
+    for (e, k) in entries.iter_mut().zip(final_keys) {
+        e.grupo = format!("{}:{}", e.tipo, k);
     }
 }
 
@@ -356,6 +413,27 @@ mod tests {
         assert_eq!(variant_key("12-logo-final_final@2x"), "logo");
         assert_eq!(variant_key("sprite-01"), "sprite-01");
         assert_eq!(variant_key("final"), "final");
+    }
+
+    #[test]
+    fn groups_understand_folders_and_shared_prefixes() {
+        // IDX-01-A05
+        let dir = tempfile::tempdir().unwrap();
+        let (a, b) = (dir.path().join("A"), dir.path().join("B"));
+        for d in ["12-oro", "13-hielo"] {
+            fs::create_dir_all(a.join(d)).unwrap();
+            fs::write(a.join(d).join("cerrada.png"), d).unwrap();
+        }
+        fs::create_dir_all(&b).unwrap();
+        for n in ["oro", "hielo", "pino"] {
+            fs::write(b.join(format!("caja-{}-cerrada.png", n)), format!("b{}", n)).unwrap();
+        }
+        let sources = vec![Source::new(&a).unwrap(), Source::new(&b).unwrap()];
+        let entries = scan(&sources, &ScanOptions { exclude: None, skip: &[], cache: None });
+        let g = |rel: &str, f: usize| entries.iter().find(|e| e.rel == rel && e.fuente == f).unwrap().grupo.clone();
+        assert_eq!(g("12-oro/cerrada.png", 0), "imagen:oro-cerrada");
+        assert_eq!(g("12-oro/cerrada.png", 0), g("caja-oro-cerrada.png", 1));
+        assert_ne!(g("12-oro/cerrada.png", 0), g("13-hielo/cerrada.png", 0));
     }
 
     #[test]

@@ -38,6 +38,6 @@ Entorno: macOS 27.2 arm64, cargo 1.99.1, navegador integrado de la app (Chromium
 
 ### No ejecutado / no comprobado
 
-- Vídeo (no había archivo de muestra), PDF visto en pantalla, vista Galería, «Mostrar en Finder», arrastrar y soltar desde el escritorio (solo se probó `/api/huella` con curl), exportar CSV desde el botón (solo la ruta con curl), `fbx` y `ply`.
+- (Vídeo y Galería: comprobados después, en CAM-002.) PDF visto en pantalla, «Mostrar en Finder», arrastrar y soltar desde el escritorio (solo se probó `/api/huella` con curl), exportar CSV desde el botón (solo la ruta con curl), `fbx` y `ply`.
 - Rendimiento con un proyecto grande real (DEC-102).
 - Linux y Windows: compila por diseño (`cfg`), no probado.
