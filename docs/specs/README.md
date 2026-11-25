@@ -1,42 +1,39 @@
-# Desarrollo guiado por especificaciones (SDD) — Opitar
+# Spec-driven development (SDD) — Opitar
 
-Cada cambio empieza con un problema observable y criterios de aceptación.
-Después se documenta el plan, se implementa el alcance acordado y se registra
-la evidencia. Un test local no acredita una instalación real ni un despliegue.
+Every change starts with an observable problem and acceptance criteria. Then the plan is written, the agreed scope is built and the evidence is recorded. A local test does not prove a real install or a release.
 
-Nivel: **estándar** (interfaz, guarda la selección del usuario, se publica como
-código abierto). Norma común: `../METODOLOGIA-SDD.md` de `activos/`.
+Level: **standard** (it has a UI, it stores the user's selection, it is published as open source).
 
-## Índice
+## Index
 
-- [Investigación previa](investigacion.md)
-- [Producto y recorridos](producto.md)
-- [Experiencia y estética](experiencia.md)
-- [Mapa de módulos](modulos.md)
-- [Contratos transversales](contratos.md)
-- [Decisiones](decisiones.md)
-- [Plantilla de cambio](plantilla-cambio.md)
-- Specs de área: [IDX-01 — Índice de archivos](IDX-01-indice.md), [SEL-01 — Selección y guardado](SEL-01-seleccion.md), [UI-01 — Interfaz y visor](UI-01-interfaz.md)
-- [Trazabilidad y evidencia](trazabilidad.md)
+- [Prior research](research.md)
+- [Product and journeys](product.md)
+- [Experience and look](experience.md)
+- [Module map](modules.md)
+- [Cross-cutting contracts](contracts.md)
+- [Decisions](decisions.md)
+- [Change template](change-template.md)
+- Area specs: [IDX-01 — File index](IDX-01-index.md), [SEL-01 — Selection and saving](SEL-01-selection.md), [UI-01 — Interface, viewer and CLI](UI-01-interface.md)
+- [Traceability and evidence](traceability.md)
 
-Cambios: [CAM-001 — Primera versión de Opitar](cambios/CAM-001/spec.md) (implementado) · [CAM-002 — Grupos que entienden carpetas y prefijos](cambios/CAM-002/spec.md) (implementado).
+Changes: [CAM-001 — First version](changes/CAM-001/spec.md) (done) · [CAM-002 — Groups that understand folders and prefixes](changes/CAM-002/spec.md) (done) · [CAM-003 — Everything in English, format v2](changes/CAM-003/spec.md) (done).
 
-## Cómo leer los requisitos
+## How to read requirements
 
-- **Actual:** lo que hace el código del commit indicado, con evidencia.
-- **Objetivo:** lo que se exige al cambiar; no dice que hoy se cumpla.
-- **Brecha:** diferencia o límite detectado. No se borra para que la spec parezca cumplida.
-- **Decisión pendiente:** elección de producto que falta.
+- **Current:** what the code does at the stated commit, with evidence.
+- **Target:** what a change must achieve; it does not claim it works today.
+- **Gap:** a known difference or limit. Never deleted to make the spec look met.
+- **Open decision:** a product choice still to make.
 
-## Niveles de evidencia
+## Evidence levels
 
-| Nivel | Qué acredita | Qué no |
+| Level | Proves | Does not prove |
 |---|---|---|
-| Documento | Intención | Que esté implementado |
-| Código leído | Comportamiento visible en el código | Que funcione al ejecutarlo |
-| Check automatizado | Ese caso, en ese commit y entorno | Pantallas, otros entornos |
-| Recorrido real | Lo observado en esa configuración | Otras plataformas |
+| Document | Intent | That it is built |
+| Code read | Behaviour visible in the code | That it works when run |
+| Automated check | That case, at that commit and environment | Screens, other environments |
+| Real walk-through | What was observed in that setup | Other platforms |
 
-## Comprobación de deriva
+## Drift check
 
 `python3 ~/.claude/skills/sdd/scripts/sdd-deriva.py .`

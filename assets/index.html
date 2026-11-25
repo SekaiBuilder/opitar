@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Opitar</title>
 <script type="importmap">{"imports":{"three":"/v/three/three.module.min.js","three/addons/":"/v/three/addons/"}}</script>
 <style>
-/* Opitar · Copyright 2026 SekaiBuilder · Apache-2.0. Estética EST-01..EST-06 (docs/specs/experiencia.md). */
+/* Opitar · Copyright 2026 SekaiBuilder · Apache-2.0. Look EST-01..EST-06 (docs/specs/experience.md). */
 :root {
   --bg: #ffffff; --bg2: #fbfbfa; --ink: #37352f; --muted: rgba(55,53,47,.6); --faint: rgba(55,53,47,.38);
   --line: rgba(55,53,47,.09); --hover: rgba(55,53,47,.045); --chip: rgba(55,53,47,.06); --sel: rgba(35,131,226,.08);
@@ -71,10 +71,10 @@ tbody tr.cur td:first-child { box-shadow: inset 2px 0 0 var(--blue); }
 .dim { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .dup { font-size: 11px; color: var(--red-ink); background: var(--red); border-radius: 3px; padding: 0 5px; margin-left: 6px; font-weight: 400; }
 .pill { display: inline-block; padding: 0 8px; border-radius: 3px; font-size: 13px; line-height: 22px; background: var(--gray); color: var(--gray-ink); white-space: nowrap; }
-.pill.queda { background: var(--green); color: var(--green-ink); } .pill.fuera { background: var(--red); color: var(--red-ink); }
+.pill.keep { background: var(--green); color: var(--green-ink); } .pill.out { background: var(--red); color: var(--red-ink); }
 .tag { display: inline-block; font-size: 12px; background: var(--chip); border-radius: 3px; padding: 0 6px; margin: 1px 3px 1px 0; color: var(--muted); }
 .note-cell { color: var(--muted); max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-tr.fuera .thumb img, .card.fuera img { filter: grayscale(1); opacity: .55; }
+tr.out .thumb img, .card.out img { filter: grayscale(1); opacity: .55; }
 .more { text-align: center; color: var(--faint); padding: 16px; }
 .empty { color: var(--muted); padding: 48px 0; text-align: center; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; padding-top: 12px; }
@@ -124,8 +124,8 @@ pre.code { margin: 0; padding: 16px; font: 12.5px/1.55 var(--mono); white-space:
 .pk-info { padding: 16px 20px 40px; }
 .pk-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
 .state-btn { border: 0; border-radius: 4px; padding: 4px 12px; cursor: pointer; background: var(--chip); }
-.state-btn.on.queda { background: var(--green); color: var(--green-ink); font-weight: 600; }
-.state-btn.on.fuera { background: var(--red); color: var(--red-ink); font-weight: 600; }
+.state-btn.on.keep { background: var(--green); color: var(--green-ink); font-weight: 600; }
+.state-btn.on.out { background: var(--red); color: var(--red-ink); font-weight: 600; }
 .state-btn.on.pend { background: var(--gray); color: var(--gray-ink); font-weight: 600; }
 .kv { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; margin: 0 0 16px; }
 .kv dt { color: var(--muted); } .kv dd { margin: 0; word-break: break-all; }
@@ -152,65 +152,65 @@ pre.code { margin: 0; padding: 16px; font: 12.5px/1.55 var(--mono); white-space:
 <body>
 <div class="top">
   <div class="brand">◐ Opitar <span class="crumb" id="crumb"></span></div>
-  <label class="search"><input id="q" placeholder="Buscar: ID (OP-…), nombre, ruta · tipo:audio  ext:png  estado:pendiente  #etiqueta  dup" autocomplete="off" spellcheck="false"></label>
+  <label class="search"><input id="q" placeholder="Search: ID (OP-…), name, path · kind:audio  ext:png  state:pending  #tag  dup" autocomplete="off" spellcheck="false"></label>
   <span class="saved" id="saved"></span>
-  <button class="btn" id="rescan" title="Volver a indexar (las elecciones se conservan)">↻ Reescanear</button>
-  <button class="btn" id="csv" title="Exportar CSV">⇩ CSV</button>
-  <button class="btn" id="helpbtn" title="Atajos de teclado">?</button>
+  <button class="btn" id="rescan" title="Re-index (choices are kept)">↻ Rescan</button>
+  <button class="btn" id="csv" title="Export CSV">⇩ CSV</button>
+  <button class="btn" id="helpbtn" title="Keyboard shortcuts">?</button>
 </div>
 <div class="page">
   <div class="icon">🗂️</div>
   <h1 id="title">Opitar</h1>
-  <p class="desc">Cada archivo tiene un ID por su contenido: aunque lo muevas o lo renombres, su ID no cambia. Marca qué se queda (<b>q</b>) y qué no (<b>x</b>); todo se guarda solo. Suelta un archivo en la página para abrirlo.</p>
+  <p class="desc">Every file gets an ID from its content: move or rename it and its ID stays the same. Mark what stays (<b>q</b>) and what goes (<b>x</b>); everything saves itself. Drop a file on the page to open it.</p>
   <dl class="props" id="props"></dl>
   <div class="views" id="views">
-    <button class="tab on" data-view="tabla">☰ Tabla</button>
-    <button class="tab" data-view="galeria">▦ Galería</button>
-    <button class="tab" data-view="comparar">⇄ Comparar<span class="count" id="ngroups"></span></button>
+    <button class="tab on" data-view="table">☰ Table</button>
+    <button class="tab" data-view="gallery">▦ Gallery</button>
+    <button class="tab" data-view="compare">⇄ Compare<span class="count" id="ngroups"></span></button>
     <span class="sep"></span>
-    <button class="tab on" data-st="todos">Todos<span class="count" data-c="todos"></span></button>
-    <button class="tab" data-st="pendiente">○ Sin decidir<span class="count" data-c="pendiente"></span></button>
-    <button class="tab" data-st="queda">✓ Se quedan<span class="count" data-c="queda"></span></button>
-    <button class="tab" data-st="fuera">✕ Fuera<span class="count" data-c="fuera"></span></button>
-    <button class="tab" data-st="dup">⧉ Duplicados<span class="count" data-c="dup"></span></button>
+    <button class="tab on" data-st="all">All<span class="count" data-c="all"></span></button>
+    <button class="tab" data-st="pending">○ Pending<span class="count" data-c="pending"></span></button>
+    <button class="tab" data-st="keep">✓ Keep<span class="count" data-c="keep"></span></button>
+    <button class="tab" data-st="out">✕ Out<span class="count" data-c="out"></span></button>
+    <button class="tab" data-st="dup">⧉ Duplicates<span class="count" data-c="dup"></span></button>
   </div>
   <div class="chips" id="chips"></div>
-  <div id="content"><p class="empty">Cargando…</p></div>
+  <div id="content"><p class="empty">Loading…</p></div>
 </div>
 <aside id="peek"></aside>
-<div id="drop">Suelta para abrir el archivo</div>
+<div id="drop">Drop to open the file</div>
 <div id="help"><div class="box">
-  <h3 style="margin-top:0">Atajos</h3>
+  <h3 style="margin-top:0">Shortcuts</h3>
   <table>
-    <tr><td><kbd>j</kbd> <kbd>↓</kbd> / <kbd>k</kbd> <kbd>↑</kbd></td><td>Siguiente / anterior</td></tr>
-    <tr><td><kbd>Espacio</kbd> <kbd>Enter</kbd></td><td>Abrir el visor</td></tr>
-    <tr><td><kbd>q</kbd></td><td>Se queda (y pasa al siguiente)</td></tr>
-    <tr><td><kbd>x</kbd></td><td>Fuera (y pasa al siguiente)</td></tr>
-    <tr><td><kbd>u</kbd></td><td>Sin decidir</td></tr>
-    <tr><td><kbd>p</kbd></td><td>Reproducir / pausar audio</td></tr>
-    <tr><td><kbd>c</kbd></td><td>Copiar ID</td></tr>
-    <tr><td><kbd>f</kbd></td><td>Visor a pantalla completa</td></tr>
-    <tr><td><kbd>/</kbd></td><td>Buscar</td></tr>
-    <tr><td><kbd>Esc</kbd></td><td>Cerrar / limpiar</td></tr>
+    <tr><td><kbd>j</kbd> <kbd>↓</kbd> / <kbd>k</kbd> <kbd>↑</kbd></td><td>Next / previous</td></tr>
+    <tr><td><kbd>Space</kbd> <kbd>Enter</kbd></td><td>Open the viewer</td></tr>
+    <tr><td><kbd>q</kbd></td><td>Keep (and move to the next)</td></tr>
+    <tr><td><kbd>x</kbd></td><td>Out (and move to the next)</td></tr>
+    <tr><td><kbd>u</kbd></td><td>Pending</td></tr>
+    <tr><td><kbd>p</kbd></td><td>Play / pause audio</td></tr>
+    <tr><td><kbd>c</kbd></td><td>Copy ID</td></tr>
+    <tr><td><kbd>f</kbd></td><td>Full-screen viewer</td></tr>
+    <tr><td><kbd>/</kbd></td><td>Search</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Close / clear</td></tr>
   </table>
 </div></div>
 <div id="toast"></div>
 <script>
 "use strict";
 const TOKEN = new URLSearchParams(location.search).get("t") || "";
-const ICON = { imagen: "🖼", audio: "🎵", video: "🎬", "3d": "🧊", documento: "📄", fuente: "🔤", codigo: "⌨", comprimido: "📦", otro: "·" };
-const KIND_NAME = { imagen: "Imagen", audio: "Audio", video: "Vídeo", "3d": "3D", documento: "Documento", fuente: "Fuente", codigo: "Código", comprimido: "Comprimido", otro: "Otro" };
-const STATE_NAME = { queda: "Se queda", fuera: "Fuera", pendiente: "Sin decidir" };
+const ICON = { image: "🖼", audio: "🎵", video: "🎬", "3d": "🧊", document: "📄", font: "🔤", code: "⌨", archive: "📦", other: "·" };
+const KIND_NAME = { image: "Image", audio: "Audio", video: "Video", "3d": "3D", document: "Document", font: "Font", code: "Code", archive: "Archive", other: "Other" };
+const STATE_NAME = { keep: "Keep", out: "Out", pending: "Pending" };
 const BROWSER_IMG = new Set(["png", "jpg", "jpeg", "webp", "gif", "svg", "avif", "bmp", "ico", "tif", "tiff", "heic"]);
 const VIEW_3D = new Set(["glb", "gltf", "obj", "stl", "fbx", "ply"]);
 const TEXT_DOCS = new Set(["md", "txt", "csv", "tsv"]);
 const PAGE = 300;
 const LOCAL_KIND = {}; // extension → kind, for dropped files that are not indexed
-for (const [k, list] of Object.entries({ imagen: "png jpg jpeg webp gif svg avif bmp ico tif tiff heic", audio: "wav mp3 ogg oga opus m4a aac flac aif aiff", video: "mp4 m4v webm mov mkv ogv", "3d": "glb gltf obj stl fbx ply", documento: "pdf md txt csv tsv", fuente: "ttf otf woff woff2", codigo: "rs js mjs ts tsx jsx py swift kt java c h cpp cs go rb php lua gd glsl wgsl sh html css json toml yaml yml xml sql" }))
+for (const [k, list] of Object.entries({ image: "png jpg jpeg webp gif svg avif bmp ico tif tiff heic", audio: "wav mp3 ogg oga opus m4a aac flac aif aiff", video: "mp4 m4v webm mov mkv ogv", "3d": "glb gltf obj stl fbx ply", document: "pdf md txt csv tsv", font: "ttf otf woff woff2", code: "rs js mjs ts tsx jsx py swift kt java c h cpp cs go rb php lua gd glsl wgsl sh html css json toml yaml yml xml sql" }))
   for (const e of list.split(" ")) LOCAL_KIND[e] = k;
 
 let data = null, marks = {}, byId = new Map();
-let view = "tabla", stFilter = "todos", kindFilter = null, query = "";
+let view = "table", stFilter = "all", kindFilter = null, query = "";
 let list = [], shown = 0, cursor = -1, openEntry = null, cleanup = null;
 const player = new Audio(); let playingN = null;
 
@@ -221,34 +221,34 @@ function api(path, body) {
   if (body !== undefined) { opts.method = "POST"; opts.body = typeof body === "string" || body instanceof Blob ? body : JSON.stringify(body); }
   return fetch(path, opts).then(r => { if (!r.ok && r.status !== 400) throw new Error(r.status); return r; });
 }
-function fileUrl(e) { return e.local ? e.url : `/f/${TOKEN}/${e.n}/${encodeURIComponent(e.nombre)}`; }
+function fileUrl(e) { return e.local ? e.url : `/f/${TOKEN}/${e.n}/${encodeURIComponent(e.name)}`; }
 function human(b) { const u = ["B", "KB", "MB", "GB", "TB"]; let i = 0; while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; } return (i ? b.toFixed(1) : b) + " " + u[i]; }
-function stateOf(e) { return (marks[e.id] || {}).estado || "pendiente"; }
+function stateOf(e) { return (marks[e.id] || {}).state || "pending"; }
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("on"), 1400); }
-function saved() { const s = $("#saved"); s.textContent = "Guardado ✓"; clearTimeout(saved.h); saved.h = setTimeout(() => s.textContent = "", 1800); }
-function copy(text, what) { navigator.clipboard.writeText(text).then(() => toast(what + " copiado"), () => toast("No se pudo copiar")); }
+function saved() { const s = $("#saved"); s.textContent = "Saved ✓"; clearTimeout(saved.h); saved.h = setTimeout(() => s.textContent = "", 1800); }
+function copy(text, what) { navigator.clipboard.writeText(text).then(() => toast(what + " copied"), () => toast("Could not copy")); }
 function normId(q) { let s = q.trim().toUpperCase(); s = s.replace(/^OP-?/, ""); return s.replace(/[^A-Z0-9]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1"); }
 function compactId(id) { return id.replace(/^OP-/, "").replace(/-/g, ""); }
 
 async function load() {
   try {
-    data = await (await api("/api/datos")).json();
+    data = await (await api("/api/data")).json();
   } catch (err) {
-    $("#content").innerHTML = ""; $("#content").append(make("p", "empty", "No se pudo conectar con Opitar. ¿Sigue abierta la terminal? Abre la URL completa que muestra (lleva el token)."));
+    $("#content").innerHTML = ""; $("#content").append(make("p", "empty", "Cannot reach Opitar. Is the terminal still running? Open the full URL it printed (it carries the token)."));
     return;
   }
-  marks = data.marcas || {};
+  marks = data.marks || {};
   byId = new Map();
-  for (const e of data.archivos) { if (!byId.has(e.id)) byId.set(e.id, []); byId.get(e.id).push(e); }
-  document.title = data.titulo + " · Opitar";
-  $("#title").textContent = data.titulo;
-  $("#crumb").textContent = "/ " + data.titulo;
+  for (const e of data.files) { if (!byId.has(e.id)) byId.set(e.id, []); byId.get(e.id).push(e); }
+  document.title = data.title + " · Opitar";
+  $("#title").textContent = data.title;
+  $("#crumb").textContent = "/ " + data.title;
   const props = $("#props"); props.textContent = "";
-  const total = data.archivos.reduce((a, e) => a + e.tamano, 0);
-  for (const [k, v] of [["Fuentes", data.fuentes.map(f => f.ruta).join(" · ")], ["Archivos", `${data.archivos.length} · ${human(total)}`], ["Se guarda en", data.salida]])
+  const total = data.files.reduce((a, e) => a + e.size, 0);
+  for (const [k, v] of [["Sources", data.sources.map(f => f.path).join(" · ")], ["Files", `${data.files.length} · ${human(total)}`], ["Saved to", data.output]])
     props.append(make("dt", null, k), make("dd", null, v));
   refresh();
-  if (data.fuentes.length === 1 && data.fuentes[0].es_archivo && data.archivos.length) { openPeek(data.archivos[0]); $("#peek").classList.add("full"); }
+  if (data.sources.length === 1 && data.sources[0].is_file && data.files.length) { openPeek(data.files[0]); $("#peek").classList.add("full"); }
 }
 
 /* ---------- Search and filters (UI-01-R04, R05) ---------- */
@@ -256,33 +256,33 @@ function parseQuery(q) {
   const terms = [];
   for (const raw of q.trim().split(/\s+/).filter(Boolean)) {
     const t = raw.toLowerCase();
-    if (t.startsWith("tipo:")) terms.push(e => e.tipo.startsWith(t.slice(5)) || KIND_NAME[e.tipo].toLowerCase().startsWith(t.slice(5)));
+    if (t.startsWith("kind:")) terms.push(e => e.kind.startsWith(t.slice(5)) || KIND_NAME[e.kind].toLowerCase().startsWith(t.slice(5)));
     else if (t.startsWith("ext:")) terms.push(e => e.ext === t.slice(4).replace(/^\./, ""));
-    else if (t.startsWith("estado:")) { const v = t.slice(7); terms.push(e => stateOf(e).startsWith(v) || (v.startsWith("sin") && stateOf(e) === "pendiente")); }
-    else if (t.startsWith("#")) terms.push(e => ((marks[e.id] || {}).etiquetas || []).some(g => g.toLowerCase().startsWith(t.slice(1))));
-    else if (t === "dup") terms.push(e => e.copias > 1);
+    else if (t.startsWith("state:")) { const v = t.slice(6); terms.push(e => stateOf(e).startsWith(v)); }
+    else if (t.startsWith("#")) terms.push(e => ((marks[e.id] || {}).tags || []).some(g => g.toLowerCase().startsWith(t.slice(1))));
+    else if (t === "dup") terms.push(e => e.copies > 1);
     else {
       const id = normId(raw);
       terms.push(e => (id.length >= 2 && compactId(e.id).includes(id)) || e.rel.toLowerCase().includes(t)
-        || ((marks[e.id] || {}).etiquetas || []).some(g => g.toLowerCase().includes(t)) || ((marks[e.id] || {}).nota || "").toLowerCase().includes(t));
+        || ((marks[e.id] || {}).tags || []).some(g => g.toLowerCase().includes(t)) || ((marks[e.id] || {}).note || "").toLowerCase().includes(t));
     }
   }
   return e => terms.every(f => f(e));
 }
-function passState(e, st) { return st === "todos" || (st === "dup" ? e.copias > 1 : stateOf(e) === st); }
+function passState(e, st) { return st === "all" || (st === "dup" ? e.copies > 1 : stateOf(e) === st); }
 
 function refresh(keepCursor) {
   const match = parseQuery(query);
-  const base = data.archivos.filter(match);
-  const counts = { todos: 0, pendiente: 0, queda: 0, fuera: 0, dup: 0 };
+  const base = data.files.filter(match);
+  const counts = { all: 0, pending: 0, keep: 0, out: 0, dup: 0 };
   const kinds = {};
   for (const e of base) {
-    if (!kindFilter || e.tipo === kindFilter) { counts.todos++; counts[stateOf(e)]++; if (e.copias > 1) counts.dup++; }
-    if (passState(e, stFilter)) kinds[e.tipo] = (kinds[e.tipo] || 0) + 1;
+    if (!kindFilter || e.kind === kindFilter) { counts.all++; counts[stateOf(e)]++; if (e.copies > 1) counts.dup++; }
+    if (passState(e, stFilter)) kinds[e.kind] = (kinds[e.kind] || 0) + 1;
   }
   document.querySelectorAll("[data-c]").forEach(el => el.textContent = counts[el.dataset.c] || "");
   const chips = $("#chips"); chips.textContent = "";
-  const all = make("button", "chip" + (kindFilter ? "" : " on"), "Todos los tipos");
+  const all = make("button", "chip" + (kindFilter ? "" : " on"), "All kinds");
   all.onclick = () => { kindFilter = null; refresh(); }; chips.append(all);
   for (const k of Object.keys(ICON)) {
     if (!kinds[k] && kindFilter !== k) continue;
@@ -291,7 +291,7 @@ function refresh(keepCursor) {
     c.onclick = () => { kindFilter = kindFilter === k ? null : k; refresh(); };
     chips.append(c);
   }
-  list = base.filter(e => (!kindFilter || e.tipo === kindFilter) && passState(e, stFilter));
+  list = base.filter(e => (!kindFilter || e.kind === kindFilter) && passState(e, stFilter));
   const groups = variantGroups(list);
   $("#ngroups").textContent = groups.length || "";
   const prevN = keepCursor && cursor >= 0 && list[cursor] ? list[cursor].n : null;
@@ -301,19 +301,19 @@ function refresh(keepCursor) {
 
 function variantGroups(entries) {
   const g = new Map();
-  for (const e of entries) { if (!g.has(e.grupo)) g.set(e.grupo, []); g.get(e.grupo).push(e); }
+  for (const e of entries) { if (!g.has(e.group)) g.set(e.group, []); g.get(e.group).push(e); }
   return [...g.values()].filter(v => new Set(v.map(e => e.id)).size > 1);
 }
 
 /* ---------- Views (UI-01-R03, R07) ---------- */
 function render(groups) {
   const c = $("#content"); c.textContent = ""; shown = 0; cursor = -1;
-  if (!data.archivos.length) { c.append(make("p", "empty", "No hay archivos en estas rutas. ¿Están todos ignorados por .gitignore u ocultos?")); return; }
-  if (view === "comparar") return renderCompare(c, groups || variantGroups(list));
-  if (!list.length) { c.append(make("p", "empty", "Ningún archivo coincide con la búsqueda y los filtros.")); return; }
-  if (view === "tabla") {
+  if (!data.files.length) { c.append(make("p", "empty", "No files in these paths. Are they all ignored by .gitignore or hidden?")); return; }
+  if (view === "compare") return renderCompare(c, groups || variantGroups(list));
+  if (!list.length) { c.append(make("p", "empty", "No file matches the search and filters.")); return; }
+  if (view === "table") {
     const wrap = make("div", "table-wrap"), table = make("table"), thead = make("thead"), tr = make("tr");
-    for (const [g, t] of [["#", "ID"], ["◫", ""], ["Aa", "Nombre"], ["◇", "Tipo"], ["⇲", "Tamaño"], ["▭", "Medidas"], ["◉", "Estado"], ["#", "Etiquetas"], ["≡", "Nota"]]) {
+    for (const [g, t] of [["#", "ID"], ["◫", ""], ["Aa", "Name"], ["◇", "Kind"], ["⇲", "Size"], ["▭", "Dimensions"], ["◉", "State"], ["#", "Tags"], ["≡", "Note"]]) {
       const th = make("th"); th.append(make("span", "g", g), t); tr.append(th);
     }
     thead.append(tr); table.append(thead, make("tbody")); wrap.append(table); c.append(wrap);
@@ -321,56 +321,56 @@ function render(groups) {
   c.append(make("div", "more"));
   more();
 }
-function container() { return view === "tabla" ? $("#content tbody") : $("#content .grid"); }
+function container() { return view === "table" ? $("#content tbody") : $("#content .grid"); }
 function more() {
   const box = container(); if (!box) return;
   const end = Math.min(list.length, shown + PAGE);
-  for (let i = shown; i < end; i++) box.append(view === "tabla" ? rowEl(list[i], i) : cardEl(list[i], i));
+  for (let i = shown; i < end; i++) box.append(view === "table" ? rowEl(list[i], i) : cardEl(list[i], i));
   shown = end;
   const m = $("#content .more");
-  if (m) m.textContent = shown < list.length ? `Mostrando ${shown} de ${list.length} · baja para ver más` : (list.length > PAGE ? `${list.length} archivos` : "");
+  if (m) m.textContent = shown < list.length ? `Showing ${shown} of ${list.length} · scroll for more` : (list.length > PAGE ? `${list.length} files` : "");
 }
-window.addEventListener("scroll", () => { if (view !== "comparar" && shown < list.length && innerHeight + scrollY > document.body.scrollHeight - 600) more(); });
+window.addEventListener("scroll", () => { if (view !== "compare" && shown < list.length && innerHeight + scrollY > document.body.scrollHeight - 600) more(); });
 
-function idChip(e) { const s = make("span", "idc", e.id); s.title = "Copiar ID"; s.onclick = ev => { ev.stopPropagation(); copy(e.id, "ID"); }; return s; }
+function idChip(e) { const s = make("span", "idc", e.id); s.title = "Copy ID"; s.onclick = ev => { ev.stopPropagation(); copy(e.id, "ID"); }; return s; }
 function pill(e) { const st = stateOf(e); return make("span", "pill " + st, STATE_NAME[st]); }
-function dims(e) { return e.ancho ? `${e.ancho}×${e.alto}` : ""; }
+function dims(e) { return e.width ? `${e.width}×${e.height}` : ""; }
 function thumb(e) {
   const t = make("div", "thumb");
-  if (e.tipo === "imagen" && BROWSER_IMG.has(e.ext)) { const img = make("img"); img.loading = "lazy"; img.src = fileUrl(e); img.onerror = () => { img.remove(); t.textContent = ICON.imagen; }; t.append(img); }
-  else if (e.tipo === "audio") { const b = make("button", "play", playingN === e.n ? "⏸" : "▶"); b.title = "Escuchar (p)"; b.onclick = ev => { ev.stopPropagation(); togglePlay(e); }; t.append(b); }
-  else t.textContent = ICON[e.tipo];
+  if (e.kind === "image" && BROWSER_IMG.has(e.ext)) { const img = make("img"); img.loading = "lazy"; img.src = fileUrl(e); img.onerror = () => { img.remove(); t.textContent = ICON.image; }; t.append(img); }
+  else if (e.kind === "audio") { const b = make("button", "play", playingN === e.n ? "⏸" : "▶"); b.title = "Listen (p)"; b.onclick = ev => { ev.stopPropagation(); togglePlay(e); }; t.append(b); }
+  else t.textContent = ICON[e.kind];
   return t;
 }
 function rowEl(e, i) {
   const tr = make("tr", stateOf(e)); tr.dataset.i = i; tr.dataset.n = e.n;
   const tdId = make("td"); tdId.append(idChip(e));
   const tdT = make("td"); tdT.append(thumb(e));
-  const nm = make("td", "nm", e.nombre); nm.title = e.rel;
-  if (e.copias > 1) nm.append(make("span", "dup", "×" + e.copias));
-  const where = (data.fuentes.length > 1 ? data.fuentes[e.fuente].nombre + "/" : "") + e.carpeta;
+  const nm = make("td", "nm", e.name); nm.title = e.rel;
+  if (e.copies > 1) nm.append(make("span", "dup", "×" + e.copies));
+  const where = (data.sources.length > 1 ? data.sources[e.source].name + "/" : "") + e.folder;
   if (where) nm.append(make("small", null, where));
   const st = make("td", "st"); st.append(pill(e));
-  const tg = make("td", "tg"); for (const g of (marks[e.id] || {}).etiquetas || []) tg.append(make("span", "tag", "#" + g));
-  tr.append(tdId, tdT, nm, make("td", "dim", KIND_NAME[e.tipo] + " · " + (e.ext || "—")), make("td", "dim", human(e.tamano)), make("td", "dim", dims(e)), st, tg, make("td", "note-cell", (marks[e.id] || {}).nota || ""));
+  const tg = make("td", "tg"); for (const g of (marks[e.id] || {}).tags || []) tg.append(make("span", "tag", "#" + g));
+  tr.append(tdId, tdT, nm, make("td", "dim", KIND_NAME[e.kind] + " · " + (e.ext || "—")), make("td", "dim", human(e.size)), make("td", "dim", dims(e)), st, tg, make("td", "note-cell", (marks[e.id] || {}).note || ""));
   tr.onclick = () => { setCursor(i); openPeek(e); };
   return tr;
 }
 function preview(e, big) {
   const pv = make("div", "pv");
-  if (e.tipo === "imagen" && BROWSER_IMG.has(e.ext)) { const img = make("img"); img.loading = "lazy"; img.src = fileUrl(e); img.onerror = () => { img.remove(); pv.textContent = ICON.imagen; }; pv.append(img); }
-  else if (e.tipo === "video") { const v = make("video"); v.muted = true; v.preload = "none"; v.dataset.src = fileUrl(e) + "#t=0.5"; lazyVideo(v); pv.append(v); }
-  else if (e.tipo === "fuente") { const s = make("span", "font", "Aa"); loadFont(e).then(f => s.style.fontFamily = f).catch(() => {}); pv.append(s); }
-  else if (e.tipo === "audio") { const b = make("button", "play", playingN === e.n ? "⏸" : "▶"); b.style.fontSize = "36px"; b.onclick = ev => { ev.stopPropagation(); togglePlay(e); }; pv.append(b); }
-  else pv.textContent = ICON[e.tipo];
+  if (e.kind === "image" && BROWSER_IMG.has(e.ext)) { const img = make("img"); img.loading = "lazy"; img.src = fileUrl(e); img.onerror = () => { img.remove(); pv.textContent = ICON.image; }; pv.append(img); }
+  else if (e.kind === "video") { const v = make("video"); v.muted = true; v.preload = "none"; v.dataset.src = fileUrl(e) + "#t=0.5"; lazyVideo(v); pv.append(v); }
+  else if (e.kind === "font") { const s = make("span", "font", "Aa"); loadFont(e).then(f => s.style.fontFamily = f).catch(() => {}); pv.append(s); }
+  else if (e.kind === "audio") { const b = make("button", "play", playingN === e.n ? "⏸" : "▶"); b.style.fontSize = "36px"; b.onclick = ev => { ev.stopPropagation(); togglePlay(e); }; pv.append(b); }
+  else pv.textContent = ICON[e.kind];
   return pv;
 }
 const io = "IntersectionObserver" in window ? new IntersectionObserver(items => { for (const it of items) if (it.isIntersecting) { const v = it.target; v.preload = "metadata"; v.src = v.dataset.src; io.unobserve(v); } }, { rootMargin: "200px" }) : null;
 function lazyVideo(v) { if (io) io.observe(v); else { v.preload = "metadata"; v.src = v.dataset.src; } }
 function cardEl(e, i) {
   const c = make("div", "card " + stateOf(e)); c.dataset.i = i; c.dataset.n = e.n;
-  const meta = make("div", "meta"), nm = make("div", "nm", e.nombre); nm.title = e.rel;
-  if (e.copias > 1) nm.append(make("span", "dup", "×" + e.copias));
+  const meta = make("div", "meta"), nm = make("div", "nm", e.name); nm.title = e.rel;
+  if (e.copies > 1) nm.append(make("span", "dup", "×" + e.copies));
   const row = make("div", "row"); row.append(idChip(e), pill(e));
   meta.append(nm, row);
   c.append(preview(e), meta);
@@ -378,27 +378,27 @@ function cardEl(e, i) {
   return c;
 }
 function renderCompare(c, groups) {
-  if (!groups.length) { c.append(make("p", "empty", "No hay grupos de variantes con estos filtros. Un grupo junta archivos del mismo tipo con el mismo nombre base: «logo_v1», «logo-final» y «Logo (2)» son el grupo «logo».")); return; }
+  if (!groups.length) { c.append(make("p", "empty", "No variant groups with these filters. A group joins files of the same kind with the same base name: “logo_v1”, “logo-final” and “Logo (2)” are the group “logo”.")); return; }
   const box = make("div", "cmp");
-  box.append(make("p", "desc", "Toca la versión que se queda: las demás del grupo quedan fuera. Tócala otra vez para deshacer. ⤢ abre el visor."));
+  box.append(make("p", "desc", "Click the version that stays: the rest of the group are marked out. Click it again to undo. ⤢ opens the viewer."));
   for (const g of groups.slice(0, 400)) {
-    const r = make("div", "cmp-row"), h = make("h3", null, ICON[g[0].tipo] + " " + g[0].grupo.split(":").slice(1).join(":"));
-    const kept = g.find(e => stateOf(e) === "queda");
-    h.append(make("small", null, `${g.length} versiones` + (kept ? ` · se queda ${kept.nombre}` : " · sin decidir")));
+    const r = make("div", "cmp-row"), h = make("h3", null, ICON[g[0].kind] + " " + g[0].group.split(":").slice(1).join(":"));
+    const kept = g.find(e => stateOf(e) === "keep");
+    h.append(make("small", null, `${g.length} versions` + (kept ? ` · keeping ${kept.name}` : " · pending")));
     const cells = make("div", "cmp-cells");
     for (const e of g) {
-      const card = make("div", "card " + stateOf(e) + (stateOf(e) === "queda" ? " chosen" : ""));
-      const meta = make("div", "meta"), nm = make("div", "nm", e.nombre);
-      nm.append(make("small", null, (data.fuentes.length > 1 ? data.fuentes[e.fuente].nombre + "/" : "") + (e.carpeta || "") + " · " + human(e.tamano) + (dims(e) ? " · " + dims(e) : "")));
+      const card = make("div", "card " + stateOf(e) + (stateOf(e) === "keep" ? " chosen" : ""));
+      const meta = make("div", "meta"), nm = make("div", "nm", e.name);
+      nm.append(make("small", null, (data.sources.length > 1 ? data.sources[e.source].name + "/" : "") + (e.folder || "") + " · " + human(e.size) + (dims(e) ? " · " + dims(e) : "")));
       const row = make("div", "row"); row.append(idChip(e), pill(e)); meta.append(nm, row);
-      const z = make("button", "zoombtn", "⤢"); z.title = "Abrir en el visor"; z.onclick = ev => { ev.stopPropagation(); openPeek(e); };
+      const z = make("button", "zoombtn", "⤢"); z.title = "Open in the viewer"; z.onclick = ev => { ev.stopPropagation(); openPeek(e); };
       card.append(preview(e), meta, z);
       card.onclick = () => pickGroup(e);
       cells.append(card);
     }
     r.append(h, cells); box.append(r);
   }
-  if (groups.length > 400) box.append(make("p", "more", `Mostrando 400 de ${groups.length} grupos; usa el buscador para acotar.`));
+  if (groups.length > 400) box.append(make("p", "more", `Showing 400 of ${groups.length} groups; use search to narrow down.`));
   c.append(box);
 }
 
@@ -413,7 +413,7 @@ function setCursor(i) {
 }
 function current() { return openEntry && !openEntry.local ? openEntry : list[cursor]; }
 function move(d) {
-  if (view === "comparar") return;
+  if (view === "compare") return;
   const next = cursor < 0 ? 0 : Math.max(0, Math.min(list.length - 1, cursor + d));
   setCursor(next);
   if (openEntry && list[next]) openPeek(list[next]);
@@ -432,8 +432,8 @@ document.addEventListener("keydown", ev => {
   else if (k === "j" || k === "ArrowDown" || (openEntry && k === "ArrowRight")) { ev.preventDefault(); move(1); }
   else if (k === "k" || k === "ArrowUp" || (openEntry && k === "ArrowLeft")) { ev.preventDefault(); move(-1); }
   else if (k === " " || k === "Enter") { const e = list[cursor]; if (e) { ev.preventDefault(); openEntry && openEntry.n === e.n ? closePeek() : openPeek(e); } }
-  else if (k === "q" || k === "x" || k === "u") { const e = current(); if (e) { setState(e, k === "q" ? "queda" : k === "x" ? "fuera" : null); if (k !== "u") move(1); } }
-  else if (k === "p") { const e = current(); if (e && e.tipo === "audio") togglePlay(e); else if (!player.paused) player.pause(); }
+  else if (k === "q" || k === "x" || k === "u") { const e = current(); if (e) { setState(e, k === "q" ? "keep" : k === "x" ? "out" : null); if (k !== "u") move(1); } }
+  else if (k === "p") { const e = current(); if (e && e.kind === "audio") togglePlay(e); else if (!player.paused) player.pause(); }
   else if (k === "c") { const e = current(); if (e) copy(e.id, "ID"); }
   else if (k === "f" && openEntry) $("#peek").classList.toggle("full");
   else if (k === "?") $("#help").classList.toggle("open");
@@ -443,35 +443,35 @@ document.addEventListener("keydown", ev => {
 async function send(path, body) {
   try {
     const r = await (await api(path, body)).json();
-    if (!r.ok) { toast(r.error || "No se pudo guardar"); return false; }
-    marks = r.marcas; saved(); return true;
-  } catch { toast("Sin conexión con Opitar: no se guardó"); return false; }
+    if (!r.ok) { toast(r.error || "Could not save"); return false; }
+    marks = r.marks; saved(); return true;
+  } catch { toast("No connection to Opitar: not saved"); return false; }
 }
-async function setState(e, estado) { if (await send("/api/marca", { id: e.id, estado })) afterMark(); }
-async function pickGroup(e) { if (await send("/api/grupo", { id: e.id })) afterMark(); }
+async function setState(e, estado) { if (await send("/api/mark", { id: e.id, estado })) afterMark(); }
+async function pickGroup(e) { if (await send("/api/group", { id: e.id })) afterMark(); }
 function afterMark() {
   // Rows stay where they are (no jump while triaging); only their state changes.
   document.querySelectorAll("#content [data-n]").forEach(el => {
-    const e = data.archivos[+el.dataset.n]; const st = stateOf(e);
-    el.classList.remove("queda", "fuera", "pendiente"); el.classList.add(st);
+    const e = data.files[+el.dataset.n]; const st = stateOf(e);
+    el.classList.remove("keep", "out", "pending"); el.classList.add(st);
     const p = el.querySelector(".pill"); if (p) { p.className = "pill " + st; p.textContent = STATE_NAME[st]; }
-    const tg = el.querySelector("td.tg"); if (tg) { tg.textContent = ""; for (const g of (marks[e.id] || {}).etiquetas || []) tg.append(make("span", "tag", "#" + g)); }
-    const nc = el.querySelector("td.note-cell"); if (nc) nc.textContent = (marks[e.id] || {}).nota || "";
+    const tg = el.querySelector("td.tg"); if (tg) { tg.textContent = ""; for (const g of (marks[e.id] || {}).tags || []) tg.append(make("span", "tag", "#" + g)); }
+    const nc = el.querySelector("td.note-cell"); if (nc) nc.textContent = (marks[e.id] || {}).note || "";
   });
-  if (view === "comparar") refresh();
+  if (view === "compare") refresh();
   else updateCounts();
   if (openEntry && !openEntry.local) renderInfo(openEntry);
 }
 function updateCounts() {
-  const match = parseQuery(query); const counts = { todos: 0, pendiente: 0, queda: 0, fuera: 0, dup: 0 };
-  for (const e of data.archivos) if (match(e) && (!kindFilter || e.tipo === kindFilter)) { counts.todos++; counts[stateOf(e)]++; if (e.copias > 1) counts.dup++; }
+  const match = parseQuery(query); const counts = { all: 0, pending: 0, keep: 0, out: 0, dup: 0 };
+  for (const e of data.files) if (match(e) && (!kindFilter || e.kind === kindFilter)) { counts.all++; counts[stateOf(e)]++; if (e.copies > 1) counts.dup++; }
   document.querySelectorAll("[data-c]").forEach(el => el.textContent = counts[el.dataset.c] || "");
 }
 
 /* ---------- Audio ---------- */
 function togglePlay(e) {
   if (playingN === e.n && !player.paused) { player.pause(); }
-  else { if (playingN !== e.n) player.src = fileUrl(e); playingN = e.n; player.play().catch(() => toast("Este formato no se puede reproducir en el navegador")); }
+  else { if (playingN !== e.n) player.src = fileUrl(e); playingN = e.n; player.play().catch(() => toast("This format cannot be played in the browser")); }
   syncPlayButtons();
 }
 player.onpause = player.onended = player.onplay = () => syncPlayButtons();
@@ -486,11 +486,11 @@ function openPeek(e) {
   openEntry = e;
   const pk = $("#peek"); pk.textContent = ""; pk.classList.add("open");
   const head = make("div", "pk-head");
-  const prev = make("button", "btn", "↑"); prev.title = "Anterior (k)"; prev.onclick = () => move(-1);
-  const next = make("button", "btn", "↓"); next.title = "Siguiente (j)"; next.onclick = () => move(1);
-  const full = make("button", "btn", "⤢"); full.title = "Pantalla completa (f)"; full.onclick = () => pk.classList.toggle("full");
-  const close = make("button", "btn", "✕"); close.title = "Cerrar (Esc)"; close.onclick = closePeek;
-  head.append(make("span", "t", (ICON[e.tipo] || "") + " " + e.nombre));
+  const prev = make("button", "btn", "↑"); prev.title = "Previous (k)"; prev.onclick = () => move(-1);
+  const next = make("button", "btn", "↓"); next.title = "Next (j)"; next.onclick = () => move(1);
+  const full = make("button", "btn", "⤢"); full.title = "Full screen (f)"; full.onclick = () => pk.classList.toggle("full");
+  const close = make("button", "btn", "✕"); close.title = "Close (Esc)"; close.onclick = closePeek;
+  head.append(make("span", "t", (ICON[e.kind] || "") + " " + e.name));
   if (!e.local) head.append(prev, next);
   head.append(full, close);
   const body = make("div", "pk-body"), stage = make("div", "stage"), info = make("div", "pk-info");
@@ -501,9 +501,9 @@ function openPeek(e) {
 }
 function noPreview(stage, e, why) {
   const box = make("div", "nopv");
-  box.append(make("div", null, ICON[e.tipo] || "·"), make("p", null, why || "Este formato no tiene vista previa en el navegador."));
+  box.append(make("div", null, ICON[e.kind] || "·"), make("p", null, why || "This format has no preview in the browser."));
   if (!e.local) {
-    const pre = make("pre", "code"); pre.textContent = "Cargando bytes…";
+    const pre = make("pre", "code"); pre.textContent = "Loading bytes…";
     api(`/api/hex/${e.n}`).then(r => r.text()).then(t => pre.textContent = t).catch(() => pre.textContent = "");
     stage.classList.add("scroll"); stage.append(pre);
     stage.prepend(box);
@@ -511,48 +511,48 @@ function noPreview(stage, e, why) {
 }
 function renderStage(stage, e) {
   const url = fileUrl(e);
-  if (e.tipo === "imagen") {
-    if (!BROWSER_IMG.has(e.ext)) return noPreview(stage, e, `.${e.ext}: el navegador no muestra este formato de imagen.`);
-    const img = make("img", "main"); img.src = url; img.alt = e.nombre;
+  if (e.kind === "image") {
+    if (!BROWSER_IMG.has(e.ext)) return noPreview(stage, e, `.${e.ext}: the browser does not display this image format.`);
+    const img = make("img", "main"); img.src = url; img.alt = e.name;
     img.onclick = () => { img.classList.toggle("actual"); stage.classList.toggle("scroll"); };
-    img.onerror = () => { stage.textContent = ""; noPreview(stage, e, "Este navegador no puede mostrar esta imagen."); };
-    img.onload = () => { if (!e.ancho) { const d = $("#pk-dims"); if (d) d.textContent = `${img.naturalWidth}×${img.naturalHeight}`; } };
+    img.onerror = () => { stage.textContent = ""; noPreview(stage, e, "This browser cannot display this image."); };
+    img.onload = () => { if (!e.width) { const d = $("#pk-dims"); if (d) d.textContent = `${img.naturalWidth}×${img.naturalHeight}`; } };
     stage.append(img);
-  } else if (e.tipo === "video") {
+  } else if (e.kind === "video") {
     const v = make("video"); v.controls = true; v.src = url; v.preload = "metadata";
     v.onloadedmetadata = () => { const d = $("#pk-dims"); if (d) d.textContent = `${v.videoWidth}×${v.videoHeight} · ${fmtTime(v.duration)}`; };
-    v.onerror = () => { stage.textContent = ""; noPreview(stage, e, "Este navegador no reproduce este vídeo (prueba con Safari para .mov/.mkv)."); };
+    v.onerror = () => { stage.textContent = ""; noPreview(stage, e, "This browser cannot play this video (try Safari for .mov/.mkv)."); };
     stage.append(v);
-  } else if (e.tipo === "audio") {
+  } else if (e.kind === "audio") {
     const box = make("div", "audio-box"), canvas = make("canvas"), a = make("audio"); a.controls = true; a.src = url; a.preload = "metadata";
     a.onloadedmetadata = () => { const d = $("#pk-dims"); if (d) d.textContent = fmtTime(a.duration); };
-    a.onerror = () => toast("Este navegador no reproduce este audio");
+    a.onerror = () => toast("This browser cannot play this audio");
     if (playingN != null && !player.paused) player.pause();
     box.append(canvas, a); stage.append(box);
     cleanup = waveform(canvas, a, e);
-  } else if (e.tipo === "3d") {
-    if (!VIEW_3D.has(e.ext)) return noPreview(stage, e, `.${e.ext}: sin visor 3D en el navegador. Formatos con visor: ${[...VIEW_3D].join(", ")}.`);
+  } else if (e.kind === "3d") {
+    if (!VIEW_3D.has(e.ext)) return noPreview(stage, e, `.${e.ext}: no 3D viewer in the browser. Formats with a viewer: ${[...VIEW_3D].join(", ")}.`);
     const holder = make("div", "three"); stage.append(holder);
-    const msg = make("div", "stat", "Cargando modelo…"); stage.append(msg);
+    const msg = make("div", "stat", "Loading model…"); stage.append(msg);
     let alive = true; let dispose = null;
     cleanup = () => { alive = false; if (dispose) dispose(); };
-    view3d(holder, stage, msg, e, url).then(d => { if (alive) dispose = d; else d(); }).catch(err => { msg.textContent = "No se pudo abrir el modelo: " + (err && err.message || err); });
-  } else if (e.tipo === "fuente") {
+    view3d(holder, stage, msg, e, url).then(d => { if (alive) dispose = d; else d(); }).catch(err => { msg.textContent = "Could not open the model: " + (err && err.message || err); });
+  } else if (e.kind === "font") {
     const box = make("div", "fontbox");
     loadFont(e).then(fam => {
       const sample = make("div"); sample.contentEditable = "true"; sample.style.fontFamily = fam;
-      for (const size of [48, 32, 20, 14]) { const p = make("div", null, size >= 32 ? "Opitar Aa Bb Cc 0123" : "El veloz murciélago hindú comía feliz cardillo y kiwi. 0123456789"); p.style.fontSize = size + "px"; p.contentEditable = "true"; p.style.fontFamily = fam; box.append(p); }
+      for (const size of [48, 32, 20, 14]) { const p = make("div", null, size >= 32 ? "Opitar Aa Bb Cc 0123" : "The quick brown fox jumps over the lazy dog. 0123456789"); p.style.fontSize = size + "px"; p.contentEditable = "true"; p.style.fontFamily = fam; box.append(p); }
       const glyphs = make("div", "glyphs"); glyphs.style.fontFamily = fam;
       for (const ch of "ABCDEFGHIJKLMNÑOPQRSTUVWXYZabcdefghijklmnñopqrstuvwxyzáéíóú0123456789¿?¡!@#&%$€()[]{}") glyphs.append(make("span", null, ch));
       box.append(glyphs);
-    }).catch(() => box.append(make("p", "nopv", "No se pudo cargar la fuente.")));
+    }).catch(() => box.append(make("p", "nopv", "Could not load the font.")));
     stage.append(box);
-  } else if (e.tipo === "documento" && e.ext === "pdf") {
+  } else if (e.kind === "document" && e.ext === "pdf") {
     const f = make("iframe"); f.src = url; stage.append(f);
-  } else if (e.tipo === "codigo" || (e.tipo === "documento" && TEXT_DOCS.has(e.ext))) {
-    const pre = make("pre", "code", "Cargando…"); stage.classList.add("scroll"); stage.append(pre);
-    const p = e.local ? e.file.slice(0, 200000).text() : api(`/api/texto/${e.n}`).then(r => r.text());
-    p.then(t => { pre.textContent = t + (e.tamano > 200000 ? "\n\n… (solo los primeros 200 KB)" : ""); }).catch(() => pre.textContent = "No se pudo leer.");
+  } else if (e.kind === "code" || (e.kind === "document" && TEXT_DOCS.has(e.ext))) {
+    const pre = make("pre", "code", "Loading…"); stage.classList.add("scroll"); stage.append(pre);
+    const p = e.local ? e.file.slice(0, 200000).text() : api(`/api/text/${e.n}`).then(r => r.text());
+    p.then(t => { pre.textContent = t + (e.size > 200000 ? "\n\n… (first 200 KB only)" : ""); }).catch(() => pre.textContent = "Could not read.");
   } else noPreview(stage, e);
 }
 function fmtTime(s) { if (!isFinite(s)) return ""; const m = Math.floor(s / 60), r = Math.floor(s % 60); return `${m}:${String(r).padStart(2, "0")}`; }
@@ -584,7 +584,7 @@ function waveform(canvas, audio, e) {
   };
   draw();
   canvas.onclick = ev => { if (audio.duration) { const r = canvas.getBoundingClientRect(); audio.currentTime = (ev.clientX - r.left) / r.width * audio.duration; audio.play(); } };
-  if (e.tamano < 60 * 1024 * 1024) {
+  if (e.size < 60 * 1024 * 1024) {
     fetch(fileUrl(e)).then(r => r.arrayBuffer()).then(buf => new (window.AudioContext || window.webkitAudioContext)().decodeAudioData(buf)).then(ab => {
       const ch = ab.getChannelData(0), n = 300, step = Math.floor(ch.length / n) || 1, out = new Float32Array(n);
       let max = 0;
@@ -634,13 +634,13 @@ async function view3d(holder, stage, msg, e, url) {
   home();
   let tris = 0, meshes = 0; const mats = new Set();
   object.traverse(o => { if (o.isMesh) { meshes++; const g = o.geometry; tris += g.index ? g.index.count / 3 : g.attributes.position.count / 3; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => mats.add(m)); } });
-  msg.textContent = `${Math.round(tris).toLocaleString("es")} triángulos · ${meshes} mallas · ${mats.size} materiales` + (animations.length ? ` · ${animations.length} animaciones` : "") + ` · ${size.x.toFixed(2)}×${size.y.toFixed(2)}×${size.z.toFixed(2)}`;
+  msg.textContent = `${Math.round(tris).toLocaleString("en")} triangles · ${meshes} meshes · ${mats.size} materials` + (animations.length ? ` · ${animations.length} animations` : "") + ` · ${size.x.toFixed(2)}×${size.y.toFixed(2)}×${size.z.toFixed(2)}`;
   let mixer = null;
   if (animations.length) { mixer = new THREE.AnimationMixer(object); mixer.clipAction(animations[0]).play(); }
   const tools = make("div", "tools");
-  const wire = make("button", "btn", "Malla"); wire.onclick = () => object.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.wireframe = !m.wireframe); });
-  const rot = make("button", "btn", "Girar"); rot.onclick = () => controls.autoRotate = !controls.autoRotate;
-  const reset = make("button", "btn", "Encuadrar"); reset.onclick = home;
+  const wire = make("button", "btn", "Wireframe"); wire.onclick = () => object.traverse(o => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.wireframe = !m.wireframe); });
+  const rot = make("button", "btn", "Spin"); rot.onclick = () => controls.autoRotate = !controls.autoRotate;
+  const reset = make("button", "btn", "Fit"); reset.onclick = home;
   tools.append(reset, rot, wire); stage.append(tools);
   const clock = new THREE.Clock(); let raf = 0;
   const loop = () => { raf = requestAnimationFrame(loop); if (mixer) mixer.update(clock.getDelta()); controls.update(); renderer.render(scene, camera); };
@@ -652,22 +652,22 @@ async function view3d(holder, stage, msg, e, url) {
 function renderInfo(e) {
   const info = $("#pk-info"); if (!info) return; info.textContent = "";
   if (e.local) {
-    const n = make("div", "local-note", "Archivo abierto desde el escritorio: no está en el índice. Calculando su ID…");
+    const n = make("div", "local-note", "File opened from the desktop: not in the index. Computing its ID…");
     info.append(n);
-    api("/api/huella", e.file).then(r => r.json()).then(r => {
+    api("/api/fingerprint", e.file).then(r => r.json()).then(r => {
       n.textContent = "";
-      if (r.indexados && r.indexados.length) {
-        n.append(`Está en el índice como ${r.id} `);
-        const a = make("a", null, "→ abrir"); a.href = "#"; a.style.color = "var(--blue)";
-        a.onclick = ev => { ev.preventDefault(); openPeek(data.archivos[r.indexados[0]]); }; n.append(a);
-      } else n.textContent = `No está en el índice. Su ID sería ${r.id}.`;
-    }).catch(() => n.textContent = "No se pudo calcular el ID.");
+      if (r.indexed && r.indexed.length) {
+        n.append(`In the index as ${r.id} `);
+        const a = make("a", null, "→ open"); a.href = "#"; a.style.color = "var(--blue)";
+        a.onclick = ev => { ev.preventDefault(); openPeek(data.files[r.indexed[0]]); }; n.append(a);
+      } else n.textContent = `Not in the index. Its ID would be ${r.id}.`;
+    }).catch(() => n.textContent = "Could not compute the ID.");
   }
   const st = e.local ? null : stateOf(e);
   if (!e.local) {
     const acts = make("div", "pk-actions");
-    for (const [val, label, cls] of [["queda", "✓ Se queda", "queda"], ["fuera", "✕ Fuera", "fuera"], [null, "○ Sin decidir", "pend"]]) {
-      const b = make("button", "state-btn " + cls + ((st === (val || "pendiente")) ? " on" : ""), label);
+    for (const [val, label, cls] of [["keep", "✓ Keep", "keep"], ["out", "✕ Out", "out"], [null, "○ Pending", "pend"]]) {
+      const b = make("button", "state-btn " + cls + ((st === (val || "pending")) ? " on" : ""), label);
       b.onclick = () => setState(e, val); acts.append(b);
     }
     info.append(acts);
@@ -675,42 +675,42 @@ function renderInfo(e) {
   const kv = make("dl", "kv");
   const add = (k, v, id) => { const dd = make("dd"); if (id) dd.id = id; if (v instanceof Node) dd.append(v); else dd.textContent = v; kv.append(make("dt", null, k), dd); };
   if (!e.local) add("ID", idChip(e));
-  add("Tipo", `${KIND_NAME[e.tipo] || e.tipo} · .${e.ext || "—"}` + (e.mime ? ` · ${e.mime.split(";")[0]}` : ""));
-  add("Tamaño", `${human(e.tamano)} (${e.tamano.toLocaleString("es")} bytes)`);
-  add("Medidas", dims(e), "pk-dims");
+  add("Kind", `${KIND_NAME[e.kind] || e.kind} · .${e.ext || "—"}` + (e.mime ? ` · ${e.mime.split(";")[0]}` : ""));
+  add("Size", `${human(e.size)} (${e.size.toLocaleString("en")} bytes)`);
+  add("Dimensions", dims(e), "pk-dims");
   if (!e.local) {
-    add("Modificado", new Date(e.modificado * 1000).toLocaleString("es"));
-    add("Ruta", e.ruta);
+    add("Modified", new Date(e.modified * 1000).toLocaleString("en"));
+    add("Path", e.path);
     const same = (byId.get(e.id) || []).filter(o => o.n !== e.n);
     if (same.length) {
       const box = make("div");
       for (const o of same) { const a = make("a", null, o.rel); a.onclick = () => openPeek(o); box.append(a, make("br")); }
-      add(`Duplicados (${same.length})`, box);
+      add(`Duplicates (${same.length})`, box);
     }
-    const sibs = data.archivos.filter(o => o.grupo === e.grupo && o.id !== e.id);
+    const sibs = data.files.filter(o => o.group === e.group && o.id !== e.id);
     if (sibs.length) {
       const box = make("div");
       for (const o of sibs.slice(0, 12)) { const a = make("a", null, o.rel); a.onclick = () => openPeek(o); box.append(a, make("br")); }
-      add(`Otras versiones (${sibs.length})`, box);
+      add(`Other versions (${sibs.length})`, box);
     }
   }
   info.append(kv);
   if (e.local) return;
   const m = marks[e.id] || {};
   const tags = make("div", "tags-edit");
-  for (const g of m.etiquetas || []) { const t = make("span", "tag", "#" + g + " ×"); t.title = "Quitar"; t.onclick = () => send("/api/marca", { id: e.id, etiquetas: (m.etiquetas || []).filter(x => x !== g) }).then(ok => ok && afterMark()); tags.append(t); }
-  const ti = make("input"); ti.placeholder = "+ etiqueta (Enter)";
-  ti.onkeydown = ev => { if (ev.key === "Enter" && ti.value.trim()) { const v = ti.value.trim(); send("/api/marca", { id: e.id, etiquetas: [...(m.etiquetas || []), ...v.split(/[,\s]+/)] }).then(ok => { if (ok) { afterMark(); const ni = $("#pk-info .tags-edit input"); if (ni) ni.focus(); } }); } };
+  for (const g of m.tags || []) { const t = make("span", "tag", "#" + g + " ×"); t.title = "Remove"; t.onclick = () => send("/api/mark", { id: e.id, tags: (m.tags || []).filter(x => x !== g) }).then(ok => ok && afterMark()); tags.append(t); }
+  const ti = make("input"); ti.placeholder = "+ tag (Enter)";
+  ti.onkeydown = ev => { if (ev.key === "Enter" && ti.value.trim()) { const v = ti.value.trim(); send("/api/mark", { id: e.id, tags: [...(m.tags || []), ...v.split(/[,\s]+/)] }).then(ok => { if (ok) { afterMark(); const ni = $("#pk-info .tags-edit input"); if (ni) ni.focus(); } }); } };
   tags.append(ti);
-  const note = make("textarea"); note.placeholder = "Nota (se guarda al salir del campo)"; note.value = m.nota || ""; note.maxLength = 2000;
-  note.onblur = () => { if (note.value !== (m.nota || "")) send("/api/marca", { id: e.id, nota: note.value }).then(ok => ok && afterMark()); };
-  const kv2 = make("dl", "kv"); kv2.append(make("dt", null, "Etiquetas")); const d1 = make("dd"); d1.append(tags); kv2.append(d1, make("dt", null, "Nota")); const d2 = make("dd"); d2.append(note); kv2.append(d2);
+  const note = make("textarea"); note.placeholder = "Note (saved when you leave the field)"; note.value = m.note || ""; note.maxLength = 2000;
+  note.onblur = () => { if (note.value !== (m.note || "")) send("/api/mark", { id: e.id, note: note.value }).then(ok => ok && afterMark()); };
+  const kv2 = make("dl", "kv"); kv2.append(make("dt", null, "Tags")); const d1 = make("dd"); d1.append(tags); kv2.append(d1, make("dt", null, "Note")); const d2 = make("dd"); d2.append(note); kv2.append(d2);
   info.append(kv2);
   const acts = make("div", "pk-actions");
-  const b1 = make("button", "btn", "⧉ Copiar ID"); b1.onclick = () => copy(e.id, "ID");
-  const b2 = make("button", "btn", "⧉ Copiar ruta"); b2.onclick = () => copy(e.ruta, "Ruta");
-  const b3 = make("button", "btn", "◎ Mostrar en Finder"); b3.onclick = () => api("/api/revelar", { n: e.n }).catch(() => toast("No se pudo"));
-  const b4 = make("a", "btn", "↗ Abrir original"); b4.href = fileUrl(e); b4.target = "_blank"; b4.rel = "noopener";
+  const b1 = make("button", "btn", "⧉ Copy ID"); b1.onclick = () => copy(e.id, "ID");
+  const b2 = make("button", "btn", "⧉ Copy path"); b2.onclick = () => copy(e.path, "Path");
+  const b3 = make("button", "btn", "◎ Show in Finder"); b3.onclick = () => api("/api/reveal", { n: e.n }).catch(() => toast("Could not do it"));
+  const b4 = make("a", "btn", "↗ Open original"); b4.href = fileUrl(e); b4.target = "_blank"; b4.rel = "noopener";
   acts.append(b1, b2, b3, b4); info.append(acts);
 }
 
@@ -723,7 +723,7 @@ addEventListener("drop", ev => {
   ev.preventDefault(); dragDepth = 0; $("#drop").classList.remove("on");
   const f = ev.dataTransfer.files[0]; if (!f) return;
   const ext = (f.name.split(".").pop() || "").toLowerCase();
-  openPeek({ local: true, file: f, url: URL.createObjectURL(f), nombre: f.name, ext: f.name.includes(".") ? ext : "", tipo: LOCAL_KIND[ext] || "otro", tamano: f.size, mime: f.type, ancho: null, alto: null });
+  openPeek({ local: true, file: f, url: URL.createObjectURL(f), name: f.name, ext: f.name.includes(".") ? ext : "", kind: LOCAL_KIND[ext] || "other", size: f.size, mime: f.type, width: null, height: null });
 });
 
 /* ---------- Top bar ---------- */
@@ -732,8 +732,8 @@ $("#q").addEventListener("input", ev => { clearTimeout(qTimer); qTimer = setTime
 $("#q").addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.target.blur(); if (list.length) { setCursor(0); if (list.length === 1) openPeek(list[0]); } } });
 document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => { view = b.dataset.view; document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("on", x === b)); refresh(); });
 document.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { stFilter = b.dataset.st; document.querySelectorAll("[data-st]").forEach(x => x.classList.toggle("on", x === b)); refresh(); });
-$("#rescan").onclick = async () => { $("#rescan").textContent = "↻ Indexando…"; try { await api("/api/reescanear", {}); await load(); toast("Índice actualizado"); } catch { toast("No se pudo reescanear"); } $("#rescan").textContent = "↻ Reescanear"; };
-$("#csv").onclick = () => { location.href = `/api/exportar.csv?t=${TOKEN}`; };
+$("#rescan").onclick = async () => { $("#rescan").textContent = "↻ Indexing…"; try { await api("/api/rescan", {}); await load(); toast("Index updated"); } catch { toast("Could not rescan"); } $("#rescan").textContent = "↻ Rescan"; };
+$("#csv").onclick = () => { location.href = `/api/export.csv?t=${TOKEN}`; };
 $("#helpbtn").onclick = () => $("#help").classList.toggle("open");
 $("#help").onclick = ev => { if (ev.target.id === "help") $("#help").classList.remove("open"); };
 load();

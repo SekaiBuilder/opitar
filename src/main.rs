@@ -1,4 +1,4 @@
-//! Opitar — selector de archivos para desarrolladores.
+//! Opitar — a file picker for developers.
 //! Copyright 2026 SekaiBuilder. Licensed under the Apache License, Version 2.0 (see LICENSE and NOTICE).
 
 mod ids;
@@ -15,35 +15,35 @@ use std::process::ExitCode;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Opitar: pon cualquier carpeta o archivo en una tabla, con un ID por contenido, buscador por
-/// referencia y un visor para imagen, audio, vídeo, 3D, PDF, texto y fuentes. Elige qué se queda;
-/// la elección se guarda al momento en un JSON.
+/// Opitar: put any folder or file in a table, with a content ID, reference search and a viewer
+/// for image, audio, video, 3D, PDF, text and fonts. Pick what stays; the choice is saved at once
+/// to a JSON file.
 #[derive(Parser)]
 #[command(name = "opitar", version)]
 struct Cli {
-    /// Carpetas o archivos (cada uno es una fuente). Por defecto, la carpeta actual.
-    rutas: Vec<PathBuf>,
-    /// JSON donde se guarda la selección (por defecto opitar.json junto a la primera fuente).
-    #[arg(long, short)]
-    salida: Option<PathBuf>,
-    /// Título de la página (por defecto, el nombre de la primera fuente).
-    #[arg(long)]
-    titulo: Option<String>,
-    /// Puerto local; 0 elige uno libre.
-    #[arg(long, default_value_t = 0)]
-    puerto: u16,
-    /// No abrir el navegador.
-    #[arg(long)]
-    no_abrir: bool,
-    /// Expresión regular: oculta los archivos cuya ruta relativa coincide.
-    #[arg(long)]
-    excluir: Option<String>,
-    /// Imprime la tabla (ID, tipo, tamaño, ruta) y sale.
-    #[arg(long)]
-    lista: bool,
-    /// Busca por referencia (ID completo o parcial, nombre o ruta), imprime y sale.
-    #[arg(long, value_name = "REF")]
-    buscar: Option<String>,
+    /// Folders or files (each one is a source). Defaults to the current folder.
+    paths: Vec<PathBuf>,
+    /// JSON file where the selection is saved (default: opitar.json next to the first source).
+    #[arg(long, short, alias = "salida")]
+    output: Option<PathBuf>,
+    /// Page title (default: the name of the first source).
+    #[arg(long, alias = "titulo")]
+    title: Option<String>,
+    /// Local port; 0 picks a free one.
+    #[arg(long, default_value_t = 0, alias = "puerto")]
+    port: u16,
+    /// Do not open the browser.
+    #[arg(long, alias = "no-abrir")]
+    no_open: bool,
+    /// Regular expression: hides files whose relative path matches.
+    #[arg(long, alias = "excluir")]
+    exclude: Option<String>,
+    /// Print the table (ID, kind, size, path) and exit.
+    #[arg(long, alias = "lista")]
+    list: bool,
+    /// Find by reference (full or partial ID, name or path), print and exit.
+    #[arg(long, value_name = "REF", alias = "buscar")]
+    find: Option<String>,
 }
 
 fn human(bytes: u64) -> String {
@@ -69,9 +69,9 @@ fn matches(e: &Entry, query: &str) -> bool {
 
 fn print_table(entries: &[Entry], sources: &[Source]) {
     for e in entries {
-        let prefix = if sources.len() > 1 { format!("{}/", sources[e.fuente].nombre) } else { String::new() };
-        let dup = if e.copias > 1 { format!("  (duplicado ×{})", e.copias) } else { String::new() };
-        println!("{:<17} {:<10} {:>10}  {}{}{}", e.id, e.tipo, human(e.tamano), prefix, e.rel, dup);
+        let prefix = if sources.len() > 1 { format!("{}/", sources[e.source].name) } else { String::new() };
+        let dup = if e.copies > 1 { format!("  (duplicate ×{})", e.copies) } else { String::new() };
+        println!("{:<17} {:<9} {:>10}  {}{}{}", e.id, e.kind, human(e.size), prefix, e.rel, dup);
     }
 }
 
@@ -102,88 +102,88 @@ fn open_browser(url: &str) {
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    let rutas = if cli.rutas.is_empty() { vec![PathBuf::from(".")] } else { cli.rutas.clone() };
+    let paths = if cli.paths.is_empty() { vec![PathBuf::from(".")] } else { cli.paths.clone() };
     let mut sources = Vec::new();
-    for r in &rutas {
-        match Source::new(r) {
+    for p in &paths {
+        match Source::new(p) {
             Ok(s) => sources.push(s),
             Err(e) => {
-                eprintln!("opitar: {}: {}", r.display(), e);
+                eprintln!("opitar: {}: {}", p.display(), e);
                 return ExitCode::from(2);
             }
         }
     }
-    let exclude = match cli.excluir.as_deref().map(Regex::new).transpose() {
+    let exclude = match cli.exclude.as_deref().map(Regex::new).transpose() {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("opitar: --excluir no es una expresión regular válida: {}", e);
+            eprintln!("opitar: --exclude is not a valid regular expression: {}", e);
             return ExitCode::from(2);
         }
     };
 
     let first = &sources[0];
-    let salida = match &cli.salida {
+    let output = match &cli.output {
         Some(p) => std::env::current_dir().map(|d| d.join(p)).unwrap_or_else(|_| p.clone()),
-        None => first.raiz.join("opitar.json"),
+        None => first.root.join("opitar.json"),
     };
-    let cache = salida.parent().map(|p| p.join(scan::CACHE_NAME)).unwrap_or_else(|| PathBuf::from(scan::CACHE_NAME));
-    let skip = vec![salida.canonicalize().unwrap_or(salida.clone()), cache.canonicalize().unwrap_or(cache.clone())];
+    let cache = output.parent().map(|p| p.join(scan::CACHE_NAME)).unwrap_or_else(|| PathBuf::from(scan::CACHE_NAME));
+    let skip = vec![output.canonicalize().unwrap_or(output.clone()), cache.canonicalize().unwrap_or(cache.clone())];
 
     let started = std::time::Instant::now();
     let opts = ScanOptions { exclude: exclude.as_ref(), skip: &skip, cache: Some(&cache) };
     let entries = scan::scan(&sources, &opts);
 
-    if cli.lista {
+    if cli.list {
         print_table(&entries, &sources);
         return ExitCode::SUCCESS;
     }
-    if let Some(q) = &cli.buscar {
+    if let Some(q) = &cli.find {
         let hits: Vec<Entry> = entries.into_iter().filter(|e| matches(e, q)).collect();
         print_table(&hits, &sources);
         return if hits.is_empty() { ExitCode::from(1) } else { ExitCode::SUCCESS };
     }
 
-    let store = match store::Store::open(&salida) {
+    let store = match store::Store::open(&output) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("opitar: {}", e);
             return ExitCode::from(2);
         }
     };
-    let titulo = cli.titulo.clone().unwrap_or_else(|| first.nombre.clone());
-    let server = match server::bind(cli.puerto) {
+    let title = cli.title.clone().unwrap_or_else(|| first.name.clone());
+    let server = match server::bind(cli.port) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("opitar: {}", e);
             return ExitCode::from(2);
         }
     };
-    let port = server.server_addr().to_ip().map(|a| a.port()).unwrap_or(cli.puerto);
+    let port = server.server_addr().to_ip().map(|a| a.port()).unwrap_or(cli.port);
     let token = token();
     let url = format!("http://127.0.0.1:{}/?t={}", port, token);
-    let dups = entries.iter().filter(|e| e.copias > 1).count();
+    let dups = entries.iter().filter(|e| e.copies > 1).count();
     println!(
-        "Opitar · {}: {} archivos de {} fuente(s) en {:.1} s{}",
-        titulo,
+        "Opitar · {}: {} files from {} source(s) in {:.1} s{}",
+        title,
         entries.len(),
         sources.len(),
         started.elapsed().as_secs_f64(),
-        if dups > 0 { format!(" · {} duplicados", dups) } else { String::new() }
+        if dups > 0 { format!(" · {} duplicates", dups) } else { String::new() }
     );
-    println!("Selección en {}", salida.display());
+    println!("Selection saved to {}", output.display());
     println!("{}", url);
-    println!("Ctrl+C para salir.");
+    println!("Ctrl+C to quit.");
 
     let app = Arc::new(server::App {
         token,
-        titulo,
+        title,
         sources,
         entries: RwLock::new(entries),
         store: Mutex::new(store),
         exclude,
         cache,
     });
-    if !cli.no_abrir {
+    if !cli.no_open {
         open_browser(&url);
     }
     server::run(server, app);

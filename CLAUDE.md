@@ -1,6 +1,6 @@
 # Opitar
 
-Las specs están en `docs/specs/`; cada cambio de comportamiento empieza por ahí (SDD, nivel estándar).
+Specs live in `docs/specs/`; every behaviour change starts there (SDD, standard level). Everything is in English.
 
-- Compilar: `cargo build --release` · Tests: `cargo test`
-- Solo lectura de los archivos del usuario (CTR-01); nada sale del ordenador (CTR-05).
+- Build: `cargo build --release` · Tests: `cargo test`
+- Read-only on the user's files (CTR-01); nothing leaves the computer (CTR-05).

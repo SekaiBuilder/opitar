@@ -18,22 +18,22 @@ pub const CACHE_NAME: &str = ".opitar-cache.json";
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Source {
-    /// The path given (canonical): a folder or a single file.
-    pub ruta: PathBuf,
-    /// Folder that files are served from: the folder itself, or the parent of a single file.
+    /// The path given (canonical): a norm_folder or a single file.
+    pub path: PathBuf,
+    /// Folder that files are served from: the norm_folder itself, or the parent of a single file.
     #[serde(skip)]
-    pub raiz: PathBuf,
-    pub es_archivo: bool,
-    pub nombre: String,
+    pub root: PathBuf,
+    pub is_file: bool,
+    pub name: String,
 }
 
 impl Source {
     pub fn new(path: &Path) -> std::io::Result<Source> {
-        let ruta = path.canonicalize()?;
-        let es_archivo = ruta.is_file();
-        let raiz = if es_archivo { ruta.parent().unwrap_or(Path::new("/")).to_path_buf() } else { ruta.clone() };
-        let nombre = ruta.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| ruta.display().to_string());
-        Ok(Source { ruta, raiz, es_archivo, nombre })
+        let path = path.canonicalize()?;
+        let is_file = path.is_file();
+        let root = if is_file { path.parent().unwrap_or(Path::new("/")).to_path_buf() } else { path.clone() };
+        let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| path.display().to_string());
+        Ok(Source { path, root, is_file, name })
     }
 }
 
@@ -43,30 +43,30 @@ pub struct Entry {
     pub id: String,
     #[serde(skip)]
     pub digest: [u8; 32],
-    pub fuente: usize,
+    pub source: usize,
     #[serde(serialize_with = "path_str")]
-    pub ruta: PathBuf,
-    /// Path relative to the source folder ("sprites/logo.png").
+    pub path: PathBuf,
+    /// Path relative to the source norm_folder ("sprites/logo.png").
     pub rel: String,
     /// Folder part of `rel` ("sprites"), empty at the top.
-    pub carpeta: String,
-    pub nombre: String,
+    pub folder: String,
+    pub name: String,
     pub ext: String,
-    pub tipo: &'static str,
+    pub kind: &'static str,
     pub mime: String,
-    pub tamano: u64,
-    pub modificado: u64,
-    pub ancho: Option<u32>,
-    pub alto: Option<u32>,
+    pub size: u64,
+    pub modified: u64,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
     /// Variant group key (IDX-01-R05), already including the kind.
-    pub grupo: String,
+    pub group: String,
     /// How many indexed files share this content (1 = unique).
-    pub copias: usize,
-    /// Normalised file name and parent-folder name, inputs to `assign_groups` (CAM-002).
+    pub copies: usize,
+    /// Normalised file name and parent-norm_folder name, inputs to `assign_groups` (CAM-002).
     #[serde(skip)]
-    pub(crate) base: String,
+    pub(crate) norm_name: String,
     #[serde(skip)]
-    pub(crate) folder: String,
+    pub(crate) norm_folder: String,
 }
 
 fn path_str<S: serde::Serializer>(p: &Path, s: S) -> Result<S::Ok, S::Error> {
@@ -75,13 +75,13 @@ fn path_str<S: serde::Serializer>(p: &Path, s: S) -> Result<S::Ok, S::Error> {
 
 #[derive(Serialize, Deserialize, Default)]
 struct Cache {
-    archivos: HashMap<String, CacheItem>,
+    files: HashMap<String, CacheItem>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 struct CacheItem {
-    tamano: u64,
-    modificado: u64,
+    size: u64,
+    modified: u64,
     blake3: String,
 }
 
@@ -97,11 +97,11 @@ pub fn scan(sources: &[Source], opts: &ScanOptions) -> Vec<Entry> {
     let skip: HashSet<&PathBuf> = opts.skip.iter().collect();
     let mut found: Vec<(usize, PathBuf, String)> = Vec::new();
     for (index, source) in sources.iter().enumerate() {
-        if source.es_archivo {
-            found.push((index, source.ruta.clone(), source.nombre.clone()));
+        if source.is_file {
+            found.push((index, source.path.clone(), source.name.clone()));
             continue;
         }
-        let walker = ignore::WalkBuilder::new(&source.ruta)
+        let walker = ignore::WalkBuilder::new(&source.path)
             .hidden(true)
             .follow_links(false)
             .require_git(false)
@@ -121,7 +121,7 @@ pub fn scan(sources: &[Source], opts: &ScanOptions) -> Vec<Entry> {
             if skip.contains(&canonical) {
                 continue;
             }
-            let rel = path.strip_prefix(&source.ruta).unwrap_or(&path).to_string_lossy().replace('\\', "/");
+            let rel = path.strip_prefix(&source.path).unwrap_or(&path).to_string_lossy().replace('\\', "/");
             if opts.exclude.map(|re| re.is_match(&rel)).unwrap_or(false) {
                 continue;
             }
@@ -137,10 +137,10 @@ pub fn scan(sources: &[Source], opts: &ScanOptions) -> Vec<Entry> {
 
     let mut entries: Vec<Entry> = found
         .par_iter()
-        .filter_map(|(fuente, path, rel)| match describe(*fuente, path, rel, &cache) {
+        .filter_map(|(source, path, rel)| match describe(*source, path, rel, &cache) {
             Ok(e) => Some(e),
             Err(err) => {
-                eprintln!("opitar: no se pudo leer {}: {}", path.display(), err);
+                eprintln!("opitar: could not read {}: {}", path.display(), err);
                 None
             }
         })
@@ -149,7 +149,7 @@ pub fn scan(sources: &[Source], opts: &ScanOptions) -> Vec<Entry> {
     assign_ids(&mut entries);
     assign_groups(&mut entries);
     entries.sort_by(|a, b| {
-        a.fuente.cmp(&b.fuente).then_with(|| natural_cmp(&a.carpeta, &b.carpeta)).then_with(|| natural_cmp(&a.nombre, &b.nombre))
+        a.source.cmp(&b.source).then_with(|| natural_cmp(&a.folder, &b.folder)).then_with(|| natural_cmp(&a.name, &b.name))
     });
     for (n, e) in entries.iter_mut().enumerate() {
         e.n = n;
@@ -158,9 +158,9 @@ pub fn scan(sources: &[Source], opts: &ScanOptions) -> Vec<Entry> {
     if let Some(path) = opts.cache {
         let mut fresh = Cache::default();
         for e in &entries {
-            fresh.archivos.insert(
-                e.ruta.to_string_lossy().into_owned(),
-                CacheItem { tamano: e.tamano, modificado: e.modificado, blake3: hex(&e.digest) },
+            fresh.files.insert(
+                e.path.to_string_lossy().into_owned(),
+                CacheItem { size: e.size, modified: e.modified, blake3: hex(&e.digest) },
             );
         }
         if let Ok(json) = serde_json::to_vec(&fresh) {
@@ -170,10 +170,10 @@ pub fn scan(sources: &[Source], opts: &ScanOptions) -> Vec<Entry> {
     entries
 }
 
-fn describe(fuente: usize, path: &Path, rel: &str, cache: &Cache) -> std::io::Result<Entry> {
+fn describe(source: usize, path: &Path, rel: &str, cache: &Cache) -> std::io::Result<Entry> {
     let meta = std::fs::metadata(path)?;
-    let tamano = meta.len();
-    let modificado = meta.modified().ok().and_then(|t| t.duration_since(UNIX_EPOCH).ok()).map(|d| d.as_secs()).unwrap_or(0);
+    let size = meta.len();
+    let modified = meta.modified().ok().and_then(|t| t.duration_since(UNIX_EPOCH).ok()).map(|d| d.as_secs()).unwrap_or(0);
 
     let mut head = vec![0u8; 8192];
     let mut file = File::open(path)?;
@@ -182,8 +182,8 @@ fn describe(fuente: usize, path: &Path, rel: &str, cache: &Cache) -> std::io::Re
     let (k, mime) = kind::classify(path, &head);
 
     let key = path.to_string_lossy();
-    let digest = match cache.archivos.get(key.as_ref()) {
-        Some(c) if c.tamano == tamano && c.modificado == modificado => unhex(&c.blake3),
+    let digest = match cache.files.get(key.as_ref()) {
+        Some(c) if c.size == size && c.modified == modified => unhex(&c.blake3),
         _ => None,
     };
     let digest = match digest {
@@ -191,7 +191,7 @@ fn describe(fuente: usize, path: &Path, rel: &str, cache: &Cache) -> std::io::Re
         None => hash_file(path)?,
     };
 
-    let (ancho, alto) = if k == Kind::Image {
+    let (width, height) = if k == Kind::Image {
         match imagesize::size(path) {
             Ok(s) => (Some(s.width as u32), Some(s.height as u32)),
             Err(_) => (None, None),
@@ -200,9 +200,9 @@ fn describe(fuente: usize, path: &Path, rel: &str, cache: &Cache) -> std::io::Re
         (None, None)
     };
 
-    let nombre = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
-    let carpeta = match rel.rfind('/') {
+    let folder = match rel.rfind('/') {
         Some(i) => rel[..i].to_string(),
         None => String::new(),
     };
@@ -211,22 +211,22 @@ fn describe(fuente: usize, path: &Path, rel: &str, cache: &Cache) -> std::io::Re
         n: 0,
         id: String::new(),
         digest,
-        fuente,
-        ruta: path.to_path_buf(),
+        source,
+        path: path.to_path_buf(),
         rel: rel.to_string(),
-        carpeta,
-        nombre,
+        folder,
+        name,
         ext,
-        tipo: k.as_str(),
+        kind: k.as_str(),
         mime,
-        tamano,
-        modificado,
-        ancho,
-        alto,
-        grupo: String::new(),
-        copias: 1,
-        base: variant_key(&stem),
-        folder: rel.rsplit('/').nth(1).map(variant_key).unwrap_or_default(),
+        size,
+        modified,
+        width,
+        height,
+        group: String::new(),
+        copies: 1,
+        norm_name: variant_key(&stem),
+        norm_folder: rel.rsplit('/').nth(1).map(variant_key).unwrap_or_default(),
     })
 }
 
@@ -262,31 +262,31 @@ pub fn assign_ids(entries: &mut [Entry]) {
         let short = ids::format_id(&e.digest, false);
         let collides = by_short.get(&short).map(|s| s.len() > 1).unwrap_or(false);
         e.id = if collides { ids::format_id(&e.digest, true) } else { short };
-        e.copias = copies[&e.digest];
+        e.copies = copies[&e.digest];
     }
 }
 
-/// IDX-01-R05 (CAM-002): a name used in several folders of a source takes its folder
+/// IDX-01-R05 (CAM-002): a name used in several folders of a source takes its norm_folder
 /// ("12-oro/cerrada" → "oro-cerrada"); a first word shared by most of a source ("caja-…") is dropped.
 pub fn assign_groups(entries: &mut [Entry]) {
     let mut folders: HashMap<(usize, &'static str, String), HashSet<String>> = HashMap::new();
     for e in entries.iter() {
-        folders.entry((e.fuente, e.tipo, e.base.clone())).or_default().insert(e.folder.clone());
+        folders.entry((e.source, e.kind, e.norm_name.clone())).or_default().insert(e.norm_folder.clone());
     }
     let keys: Vec<String> = entries
         .iter()
         .map(|e| {
-            let shared = folders[&(e.fuente, e.tipo, e.base.clone())].len() > 1;
-            if shared && !e.folder.is_empty() {
-                format!("{}-{}", e.folder, e.base)
+            let shared = folders[&(e.source, e.kind, e.norm_name.clone())].len() > 1;
+            if shared && !e.norm_folder.is_empty() {
+                format!("{}-{}", e.norm_folder, e.norm_name)
             } else {
-                e.base.clone()
+                e.norm_name.clone()
             }
         })
         .collect();
     let mut by_source: HashMap<usize, Vec<usize>> = HashMap::new();
     for (i, e) in entries.iter().enumerate() {
-        by_source.entry(e.fuente).or_default().push(i);
+        by_source.entry(e.source).or_default().push(i);
     }
     let mut final_keys = keys.clone();
     for idx in by_source.values() {
@@ -311,7 +311,7 @@ pub fn assign_groups(entries: &mut [Entry]) {
         }
     }
     for (e, k) in entries.iter_mut().zip(final_keys) {
-        e.grupo = format!("{}:{}", e.tipo, k);
+        e.group = format!("{}:{}", e.kind, k);
     }
 }
 
@@ -430,8 +430,8 @@ mod tests {
         }
         let sources = vec![Source::new(&a).unwrap(), Source::new(&b).unwrap()];
         let entries = scan(&sources, &ScanOptions { exclude: None, skip: &[], cache: None });
-        let g = |rel: &str, f: usize| entries.iter().find(|e| e.rel == rel && e.fuente == f).unwrap().grupo.clone();
-        assert_eq!(g("12-oro/cerrada.png", 0), "imagen:oro-cerrada");
+        let g = |rel: &str, f: usize| entries.iter().find(|e| e.rel == rel && e.source == f).unwrap().group.clone();
+        assert_eq!(g("12-oro/cerrada.png", 0), "image:oro-cerrada");
         assert_eq!(g("12-oro/cerrada.png", 0), g("caja-oro-cerrada.png", 1));
         assert_ne!(g("12-oro/cerrada.png", 0), g("13-hielo/cerrada.png", 0));
     }
@@ -454,19 +454,19 @@ mod tests {
         fs::write(root.join("node_modules/x.png"), b"x").unwrap();
         fs::write(root.join("tmp/y.png"), b"y").unwrap();
         fs::write(root.join(".gitignore"), b"tmp/\n").unwrap();
-        fs::write(root.join("uno.txt"), b"igual").unwrap();
-        fs::write(root.join("a/dos.txt"), b"igual").unwrap();
-        fs::write(root.join("otro.wav"), b"RIFF....").unwrap();
+        fs::write(root.join("one.txt"), b"same").unwrap();
+        fs::write(root.join("a/two.txt"), b"same").unwrap();
+        fs::write(root.join("other.wav"), b"RIFF....").unwrap();
         let sources = vec![Source::new(root).unwrap()];
         let cache = root.join(CACHE_NAME);
         let opts = ScanOptions { exclude: None, skip: &[], cache: Some(&cache) };
         let entries = scan(&sources, &opts);
         let rels: Vec<&str> = entries.iter().map(|e| e.rel.as_str()).collect();
-        assert_eq!(rels, vec!["otro.wav", "uno.txt", "a/dos.txt"]);
-        let uno = entries.iter().find(|e| e.nombre == "uno.txt").unwrap();
-        let dos = entries.iter().find(|e| e.nombre == "dos.txt").unwrap();
-        assert_eq!(uno.id, dos.id);
-        assert_eq!(uno.copias, 2);
+        assert_eq!(rels, vec!["one.txt", "other.wav", "a/two.txt"]);
+        let one = entries.iter().find(|e| e.name == "one.txt").unwrap();
+        let two = entries.iter().find(|e| e.name == "two.txt").unwrap();
+        assert_eq!(one.id, two.id);
+        assert_eq!(one.copies, 2);
         assert!(cache.exists());
         // Second scan uses the cache and gives the same IDs.
         let again = scan(&sources, &opts);

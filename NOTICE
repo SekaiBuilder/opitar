@@ -6,10 +6,6 @@ Anyone who uses, modifies or redistributes Opitar, or works derived from it,
 must keep this NOTICE file and credit the original author, as required by
 section 4(d) of the Apache License, Version 2.0.
 
-Este producto incluye software creado por SekaiBuilder. Quien use, modifique o
-redistribuya Opitar, o trabajos derivados, debe conservar este archivo NOTICE y
-nombrar al autor original (sección 4.d de la Licencia Apache 2.0).
-
 Third-party components:
 - three.js 0.160.0 (assets/vendor/three/), Copyright 2010-2023 three.js authors, MIT License
   (assets/vendor/three/LICENSE).

@@ -31,7 +31,7 @@ const VENDOR: &[(&str, &[u8])] = &[
 
 pub struct App {
     pub token: String,
-    pub titulo: String,
+    pub title: String,
     pub sources: Vec<Source>,
     pub entries: RwLock<Vec<Entry>>,
     pub store: Mutex<Store>,
@@ -40,8 +40,8 @@ pub struct App {
 }
 
 impl App {
-    fn fuentes(&self) -> Vec<String> {
-        self.sources.iter().map(|s| s.ruta.to_string_lossy().into_owned()).collect()
+    fn source_paths(&self) -> Vec<String> {
+        self.sources.iter().map(|s| s.path.to_string_lossy().into_owned()).collect()
     }
 
     pub fn rescan(&self) {
@@ -53,12 +53,12 @@ impl App {
 
     fn save(&self, store: &mut Store) -> Result<(), String> {
         let entries = self.entries.read().unwrap();
-        store.save(&self.titulo, &self.fuentes(), &entries)
+        store.save(&self.title, &self.source_paths(), &entries)
     }
 }
 
 pub fn bind(port: u16) -> Result<Server, String> {
-    Server::http(("127.0.0.1", port)).map_err(|e| format!("no se pudo abrir el puerto {}: {}", port, e))
+    Server::http(("127.0.0.1", port)).map_err(|e| format!("could not open port {}: {}", port, e))
 }
 
 pub fn run(server: Server, app: Arc<App>) {
@@ -145,7 +145,7 @@ fn handle(app: &App, mut request: Request) {
         let resp = if query_param(query, "t") == Some(app.token.as_str()) {
             text(200, PAGE, "text/html; charset=utf-8")
         } else {
-            text(403, "Opitar: abre la URL completa que muestra la terminal (lleva el token de la sesion).", "text/plain; charset=utf-8")
+            text(403, "Opitar: open the full URL printed in the terminal (it carries the session token).", "text/plain; charset=utf-8")
         };
         let _ = request.respond(resp);
         return;
@@ -192,34 +192,34 @@ fn handle(app: &App, mut request: Request) {
     }
 
     let resp = match (method, path) {
-        (Method::Get, "/api/datos") => {
+        (Method::Get, "/api/data") => {
             let entries = app.entries.read().unwrap();
             let store = app.store.lock().unwrap();
             json_response(
                 200,
                 json!({
-                    "titulo": app.titulo,
-                    "fuentes": app.sources,
-                    "archivos": *entries,
-                    "marcas": store.data.archivos,
-                    "salida": store.path.to_string_lossy(),
+                    "title": app.title,
+                    "sources": app.sources,
+                    "files": *entries,
+                    "marks": store.data.files,
+                    "output": store.path.to_string_lossy(),
                 }),
             )
         }
-        (Method::Get, "/api/exportar.csv") => {
+        (Method::Get, "/api/export.csv") => {
             let entries = app.entries.read().unwrap();
             let store = app.store.lock().unwrap();
             text(200, &store.csv(&entries), "text/csv; charset=utf-8")
                 .with_header(header("Content-Disposition", "attachment; filename=\"opitar.csv\""))
         }
-        (Method::Get, p) if p.starts_with("/api/texto/") => match entry_path(app, &p[11..]) {
+        (Method::Get, p) if p.starts_with("/api/text/") => match entry_path(app, &p[10..]) {
             Some(file) => {
                 let mut buf = Vec::new();
                 let ok = File::open(&file).and_then(|f| f.take(200_000).read_to_end(&mut buf)).is_ok();
                 if ok {
                     text(200, &String::from_utf8_lossy(&buf), "text/plain; charset=utf-8")
                 } else {
-                    text(500, "no se pudo leer", "text/plain")
+                    text(500, "could not read", "text/plain")
                 }
             }
             None => text(404, "no", "text/plain"),
@@ -232,18 +232,18 @@ fn handle(app: &App, mut request: Request) {
             }
             None => text(404, "no", "text/plain"),
         },
-        (Method::Post, "/api/marca") => match read_body(&mut request, 64 * 1024).and_then(|b| serde_json::from_slice::<Change>(&b).ok()) {
+        (Method::Post, "/api/mark") => match read_body(&mut request, 64 * 1024).and_then(|b| serde_json::from_slice::<Change>(&b).ok()) {
             Some(change) => {
-                let ruta = route_of(app, &change.id);
+                let path = route_of(app, &change.id);
                 let mut store = app.store.lock().unwrap();
-                match store.apply(change, &ruta).and_then(|_| app.save(&mut store)) {
-                    Ok(()) => json_response(200, json!({ "ok": true, "marcas": store.data.archivos })),
+                match store.apply(change, &path).and_then(|_| app.save(&mut store)) {
+                    Ok(()) => json_response(200, json!({ "ok": true, "marks": store.data.files })),
                     Err(e) => json_response(400, json!({ "ok": false, "error": e })),
                 }
             }
-            None => json_response(400, json!({ "ok": false, "error": "petición mal formada" })),
+            None => json_response(400, json!({ "ok": false, "error": "malformed request" })),
         },
-        (Method::Post, "/api/grupo") => {
+        (Method::Post, "/api/group") => {
             #[derive(Deserialize)]
             struct Pick {
                 id: String,
@@ -252,35 +252,35 @@ fn handle(app: &App, mut request: Request) {
                 Some(pick) => {
                     let group: Vec<(String, String)> = {
                         let entries = app.entries.read().unwrap();
-                        let key = entries.iter().find(|e| e.id == pick.id).map(|e| e.grupo.clone());
+                        let key = entries.iter().find(|e| e.id == pick.id).map(|e| e.group.clone());
                         let mut seen = std::collections::HashSet::new();
                         entries
                             .iter()
-                            .filter(|e| Some(&e.grupo) == key.as_ref() && seen.insert(e.id.clone()))
-                            .map(|e| (e.id.clone(), e.ruta.to_string_lossy().into_owned()))
+                            .filter(|e| Some(&e.group) == key.as_ref() && seen.insert(e.id.clone()))
+                            .map(|e| (e.id.clone(), e.path.to_string_lossy().into_owned()))
                             .collect()
                     };
                     if group.is_empty() {
-                        json_response(404, json!({ "ok": false, "error": "ID desconocido" }))
+                        json_response(404, json!({ "ok": false, "error": "unknown ID" }))
                     } else {
                         let mut store = app.store.lock().unwrap();
                         store.choose_in_group(&pick.id, &group);
                         match app.save(&mut store) {
-                            Ok(()) => json_response(200, json!({ "ok": true, "marcas": store.data.archivos })),
+                            Ok(()) => json_response(200, json!({ "ok": true, "marks": store.data.files })),
                             Err(e) => json_response(500, json!({ "ok": false, "error": e })),
                         }
                     }
                 }
-                None => json_response(400, json!({ "ok": false, "error": "petición mal formada" })),
+                None => json_response(400, json!({ "ok": false, "error": "malformed request" })),
             }
         }
-        (Method::Post, "/api/reescanear") => {
+        (Method::Post, "/api/rescan") => {
             app.rescan();
             let mut store = app.store.lock().unwrap();
             let _ = app.save(&mut store);
             json_response(200, json!({ "ok": true }))
         }
-        (Method::Post, "/api/revelar") => {
+        (Method::Post, "/api/reveal") => {
             #[derive(Deserialize)]
             struct Reveal {
                 n: usize,
@@ -297,7 +297,7 @@ fn handle(app: &App, mut request: Request) {
             }
         }
         // UI-01-R10: a dropped file is hashed here (streamed, never stored) to find it in the index.
-        (Method::Post, "/api/huella") => {
+        (Method::Post, "/api/fingerprint") => {
             let mut hasher = blake3::Hasher::new();
             match hasher.update_reader(request.as_reader()) {
                 Ok(_) => {
@@ -309,7 +309,7 @@ fn handle(app: &App, mut request: Request) {
                         .find(|e| e.digest == digest)
                         .map(|e| e.id.clone())
                         .unwrap_or_else(|| crate::ids::format_id(&digest, false));
-                    json_response(200, json!({ "id": id, "indexados": found }))
+                    json_response(200, json!({ "id": id, "indexed": found }))
                 }
                 Err(_) => json_response(400, json!({ "ok": false })),
             }
@@ -321,29 +321,29 @@ fn handle(app: &App, mut request: Request) {
 
 fn route_of(app: &App, id: &str) -> String {
     let entries = app.entries.read().unwrap();
-    entries.iter().find(|e| e.id == id).map(|e| e.ruta.to_string_lossy().into_owned()).unwrap_or_default()
+    entries.iter().find(|e| e.id == id).map(|e| e.path.to_string_lossy().into_owned()).unwrap_or_default()
 }
 
 fn entry_path(app: &App, n: &str) -> Option<PathBuf> {
     let n: usize = n.parse().ok()?;
-    app.entries.read().unwrap().get(n).map(|e| e.ruta.clone())
+    app.entries.read().unwrap().get(n).map(|e| e.path.clone())
 }
 
 /// The indexed file `n`, or a sibling path relative to its folder that stays inside the source (CTR-05).
 fn resolve_file(app: &App, n: usize, sub: &str) -> Option<(PathBuf, String)> {
     let entries = app.entries.read().unwrap();
     let entry = entries.get(n)?;
-    if sub.is_empty() || sub == entry.nombre {
-        return Some((entry.ruta.clone(), entry.mime.clone()));
+    if sub.is_empty() || sub == entry.name {
+        return Some((entry.path.clone(), entry.mime.clone()));
     }
     let rel = Path::new(sub);
     let safe = rel.components().all(|c| matches!(c, Component::Normal(s) if !s.to_string_lossy().starts_with('.')));
     if !safe {
         return None;
     }
-    let base = entry.ruta.parent()?;
+    let base = entry.path.parent()?;
     let target = base.join(rel).canonicalize().ok()?;
-    let root = &app.sources.get(entry.fuente)?.raiz;
+    let root = &app.sources.get(entry.source)?.root;
     if !target.starts_with(root) || !target.is_file() {
         return None;
     }

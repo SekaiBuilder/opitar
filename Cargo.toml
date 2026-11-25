@@ -1,8 +1,8 @@
 [package]
 name = "opitar"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Selector de archivos para desarrolladores: tabla, ID por contenido, buscador por referencia y visor universal (imagen, audio, vídeo, 3D, PDF, texto, fuentes)."
+description = "A file picker for developers: table, content IDs, reference search and a universal viewer (image, audio, video, 3D, PDF, text, fonts)."
 license = "Apache-2.0"
 authors = ["SekaiBuilder"]
 repository = "https://github.com/SekaiBuilder/opitar"

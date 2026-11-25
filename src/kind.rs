@@ -18,15 +18,15 @@ pub enum Kind {
 impl Kind {
     pub fn as_str(self) -> &'static str {
         match self {
-            Kind::Image => "imagen",
+            Kind::Image => "image",
             Kind::Audio => "audio",
             Kind::Video => "video",
             Kind::Model => "3d",
-            Kind::Document => "documento",
-            Kind::Font => "fuente",
-            Kind::Code => "codigo",
-            Kind::Archive => "comprimido",
-            Kind::Other => "otro",
+            Kind::Document => "document",
+            Kind::Font => "font",
+            Kind::Code => "code",
+            Kind::Archive => "archive",
+            Kind::Other => "other",
         }
     }
 }
@@ -213,7 +213,7 @@ mod tests {
     fn signature_then_text_then_other() {
         let png = [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0];
         assert_eq!(classify(Path::new("sin_extension"), &png).0, Kind::Image);
-        assert_eq!(classify(Path::new("LEEME"), "hola, señor\n".as_bytes()).0, Kind::Code);
+        assert_eq!(classify(Path::new("README"), "hello, señor\n".as_bytes()).0, Kind::Code);
         assert_eq!(classify(Path::new("blob"), &[0, 1, 2, 3, 250]).0, Kind::Other);
     }
 }
