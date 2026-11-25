@@ -1,0 +1,31 @@
+[package]
+name = "opitar"
+version = "0.1.0"
+edition = "2021"
+description = "Selector de archivos para desarrolladores: tabla, ID por contenido, buscador por referencia y visor universal (imagen, audio, vídeo, 3D, PDF, texto, fuentes)."
+license = "Apache-2.0"
+authors = ["SekaiBuilder"]
+repository = "https://github.com/SekaiBuilder/opitar"
+readme = "README.md"
+keywords = ["assets", "media", "selector", "3d", "developer-tools"]
+categories = ["command-line-utilities", "multimedia"]
+
+[dependencies]
+blake3 = "1"
+clap = { version = "4", features = ["derive"] }
+ignore = "0.4"
+imagesize = "0.13"
+infer = "0.16"
+rayon = "1"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tiny_http = "0.12"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

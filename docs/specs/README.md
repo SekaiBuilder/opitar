@@ -17,7 +17,7 @@ código abierto). Norma común: `../METODOLOGIA-SDD.md` de `activos/`.
 - [Decisiones](decisiones.md)
 - [Plantilla de cambio](plantilla-cambio.md)
 - Specs de área: [IDX-01 — Índice de archivos](IDX-01-indice.md), [SEL-01 — Selección y guardado](SEL-01-seleccion.md), [UI-01 — Interfaz y visor](UI-01-interfaz.md)
-- [Trazabilidad](trazabilidad.md)
+- [Trazabilidad y evidencia](trazabilidad.md)
 
 Cambio activo: [CAM-001 — Primera versión de Opitar](cambios/CAM-001/spec.md).
 
